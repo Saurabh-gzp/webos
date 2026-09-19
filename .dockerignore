@@ -1,0 +1,6 @@
+node_modules
+data/fs.json
+.git
+*.png
+npm-debug.log
+.DS_Store

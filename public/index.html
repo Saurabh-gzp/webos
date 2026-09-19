@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WebOS 1.0</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖥️</text></svg>">
+<link rel="stylesheet" href="/css/os.css">
+</head>
+<body class="theme-dark">
+
+<!-- ============ BOOT SCREEN ============ -->
+<div id="boot">
+  <div class="boot-logo">◈</div>
+  <div class="boot-name">WebOS</div>
+  <div class="boot-sub">agent-operable browser operating system</div>
+  <div class="boot-bar"><i></i></div>
+  <div class="boot-log" id="bootLog"></div>
+</div>
+
+<!-- ============ DESKTOP ============ -->
+<div id="os" class="hidden">
+  <div id="wallpaper"></div>
+  <div id="desktop">
+    <div id="icons"></div>
+    <div id="windows"></div>
+  </div>
+
+  <!-- taskbar -->
+  <div id="taskbar">
+    <button id="startBtn" title="Start (Ctrl+Space)"><span class="start-mark">◈</span><span class="start-text">WebOS</span></button>
+    <div id="tasklist"></div>
+    <div class="tray">
+      <span id="agentPill" class="pill" title="Agent bus status"><span class="dot"></span><span id="agentPillText">agent</span></span>
+      <button id="themeBtn" class="tray-btn" title="Theme toggle">🌗</button>
+      <span id="clock"></span>
+    </div>
+  </div>
+
+  <!-- start menu -->
+  <div id="startmenu" class="hidden">
+    <div class="sm-head"><b>WebOS</b><span>v1.0</span></div>
+    <div id="sm-apps" class="sm-apps"></div>
+    <div class="sm-foot">
+      <span id="smHint">Agent API: <code>/api/agent/cmd</code></span>
+      <button id="smLock" class="tray-btn" title="Restart OS">⟳</button>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+</div>
+
+<!-- ============ SCRIPTS ============ -->
+<script src="/js/kernel.js"></script>
+<script src="/js/bridge.js"></script>
+<script src="/js/apps/browser.js"></script>
+<script src="/js/apps/files.js"></script>
+<script src="/js/apps/editor.js"></script>
+<script src="/js/apps/terminal.js"></script>
+<script src="/js/apps/agentapp.js"></script>
+<script src="/js/apps/misc.js"></script>
+<script>
+  (function () {
+    var log = function (t) {
+      var el = document.getElementById('bootLog');
+      var d = document.createElement('div');
+      d.textContent = '▸ ' + t;
+      el.appendChild(d);
+      el.scrollTop = el.scrollHeight;
+    };
+    var steps = [
+      'loading kernel modules...',
+      'mounting virtual filesystem (/Home)...',
+      'starting window manager...',
+      'connecting agent bus...',
+      'warming web proxy...',
+      'ready.'
+    ];
+    var i = 0;
+    var t = setInterval(function () {
+      if (i < steps.length) { log(steps[i++]); return; }
+      clearInterval(t);
+      var boot = document.getElementById('boot');
+      boot.classList.add('boot-done');
+      document.getElementById('os').classList.remove('hidden');
+      window.WebOS.boot();
+    }, 220);
+  })();
+</script>
+</body>
+</html>

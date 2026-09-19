@@ -1,0 +1,34 @@
+# Render blueprint for WebOS
+# Dashboard -> New -> Blueprint -> repo select karo, ye file auto-detect ho jayegi.
+#
+# FREE plan notes:
+#   * 15 min inactivity ke baad service sleep hoti hai (~1 min cold start)
+#   * local filesystem ephemeral hai -> virtual FS redeploy/restart pe reset ho jaata hai
+#     (persist karna hai to paid instance + disk: neeche commented block dekho)
+
+services:
+  - type: web
+    name: webos
+    runtime: node
+    plan: free
+    region: singapore          # India ke liye sabse kam latency
+    buildCommand: npm install  # koi dependency nahi, turant nikal jaata hai
+    startCommand: node server.js
+    healthCheckPath: /api/ping
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: WEBOS_DATA_DIR
+        value: /opt/render/project/src/data
+      # - key: PORT          # Render khud inject karta hai, isliye zaroorat nahi
+
+    # ---------------------------------------------------------------
+    # Persistent disk (sirf PAID instance types pe kaam karta hai).
+    # Files ko redeploy ke baad bhi rakhna hai to plan ko "starter"
+    # karo, disk uncomment karo, aur WEBOS_DATA_DIR=/var/data set karo.
+    # ---------------------------------------------------------------
+    # disk:
+    #   name: webos-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
