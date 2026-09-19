@@ -132,7 +132,9 @@ curl -s "$BASE/api/browser/$SID/screenshot" -o shot.jpg
 
 Agent bus se: `chromium.open · chromium.goto · chromium.act · chromium.task · chromium.screenshot ·
 chromium.frame · chromium.status · chromium.close` (GUI window khuli ho ya na ho — server pe hi chalta hai).
-OS ke andar **🌐 Chromium** app me live screen + agent panel + Ref-click + Manus-style task runner hai.
+OS ke andar **🌐 Chromium** app me live screen + agent panel + Ref-click + Manus-style task runner hai;
+purane iframe browser ke toolbar me 🌐 button usi URL ko asli Chromium me khol deta hai.
+`tools/agent-cli.js chrome status|open|goto|click|type|read|els|shot|task` bhi ready hai.
 
 Poora reference: **[AGENT-API.md](AGENT-API.md)** (`/Home/Documents/agent-quickstart.md` bhi OS ke andar hai).
 

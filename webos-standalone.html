@@ -2584,7 +2584,8 @@ ${miniBridge()}
         <button class="tb-btn" data-act="home" title="Home">⌂</button>
         <input class="inp" id="omni" placeholder="URL ya search… (Ctrl+K)" autocomplete="off" spellcheck="false">
         <button class="tb-btn primary" data-act="go">Go</button>
-        <button class="tb-btn" data-act="panel" title="Toggle side panel">☰</button>`;
+        <button class="tb-btn" data-act="panel" title="Toggle side panel">☰</button>
+        <button class="tb-btn" data-act="chromium" title="Asli Chromium me kholo (X-Frame-Options wali sites bhi chalti hain)">🌐</button>`;
       const frameBox = mk('div', 'br-frame');
       const progress = mk('div', 'br-progress');
       frameBox.appendChild(progress);
@@ -3001,6 +3002,23 @@ ${miniBridge()}
         if (act === 'home') navigate(t, 'webos://start', { skipHistory: false });
         if (act === 'go') submitOmni();
         if (act === 'panel') togglePanel();
+        if (act === 'chromium') {
+          // asli headless Chromium app (server mode) — isi URL ke saath kholo
+          const u = t && t.url && !/^webos:/.test(t.url) ? t.url : '';
+          try {
+            WebOS.open('chromium');
+            if (WebOS.isLocal) {
+              WebOS.notify('Chromium', 'Single-file build me pehle remote server URL daalo (🌐 window me)');
+            } else if (u) {
+              // asli Chromium me wahi URL kholo (bus op; GUI ke bina bhi chalta hai)
+              setTimeout(() => {
+                WebOS.handleCommand({ op: 'chrome.goto', app: 'chromium', args: { url: u } })
+                  .catch(() => {});
+              }, 400);
+              WebOS.notify('Chromium', 'Asli Chromium me khul raha hai: ' + u.slice(0, 60));
+            }
+          } catch (e) {}
+        }
       });
       function submitOmni() {
         const v = omni.value.trim();
