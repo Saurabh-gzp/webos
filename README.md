@@ -130,6 +130,10 @@ open "$BASE/api/browser/$SID/stream"
 curl -s "$BASE/api/browser/$SID/screenshot" -o shot.jpg
 ```
 
+Real signup/form flows bhi ye engine chala leta hai — `<select>` dropdowns, custom comboboxes
+(Google jaise), checkbox/radio, styled labels, iframes, multi-step waits: **[SIGNUP-DEMO.md](SIGNUP-DEMO.md)**
+(aur us doc me un 12 issues ki list bhi hai jo in flows ne pakde aur fix hue).
+
 Agent bus se: `chromium.open · chromium.goto · chromium.act · chromium.task · chromium.screenshot ·
 chromium.frame · chromium.status · chromium.close` (GUI window khuli ho ya na ho — server pe hi chalta hai).
 OS ke andar **🌐 Chromium** app me live screen + agent panel + Ref-click + Manus-style task runner hai;
@@ -159,6 +163,8 @@ webos/
 │       ├── bridge.js      SSE client + result/state reporting + inbox fallback
 │       └── apps/          chromium.js (asli Chromium live view + agent panel) · browser.js · files.js
 │                          editor.js · terminal.js · agentapp.js · misc.js
+├── SIGNUP-DEMO.md         real signup/form flows ka test report + engine fixes
+├── screenshots-signup/    us run ke screenshots (practice signup, Gmail, Render)
 ├── tools/agent-cli.js     agent ke liye ready-made CLI
 └── data/fs.json           persisted virtual filesystem
 ```

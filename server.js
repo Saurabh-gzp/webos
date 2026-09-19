@@ -242,6 +242,12 @@ const server = http.createServer(async (req, res) => {
                 fill: () => chromium.type(session, args),
                 press: () => chromium.press(session, args),
                 key: () => chromium.press(session, args),
+                select: () => chromium.select(session, args),
+                check: () => chromium.check(session, args),
+                uncheck: () => chromium.check(session, Object.assign({}, args, { checked: false })),
+                hover: () => chromium.hover(session, args),
+                waitfor: () => chromium.waitFor(session, args),
+                frames: () => chromium.frames(session),
                 scroll: () => chromium.scroll(session, args),
                 eval: () => chromium.evalJs(session, args.code || args.value),
                 extract: () => chromium.extract(session),
@@ -589,6 +595,11 @@ const server = http.createServer(async (req, res) => {
             case 'click': return await chromium.click(session, b);
             case 'type': case 'fill': return await chromium.type(session, b);
             case 'press': case 'key': return await chromium.press(session, b);
+            case 'select': case 'choose': return await chromium.select(session, b);
+            case 'check': case 'uncheck': case 'tick': return await chromium.check(session, b);
+            case 'hover': return await chromium.hover(session, b);
+            case 'waitfor': case 'wait_for': return await chromium.waitFor(session, b);
+            case 'frames': return await chromium.frames(session);
             case 'scroll': return await chromium.scroll(session, b);
             case 'eval': return await chromium.evalJs(session, b.code || b.value);
             case 'extract': case 'read': return await chromium.extract(session);
@@ -598,7 +609,7 @@ const server = http.createServer(async (req, res) => {
             case 'forward': return await chromium.forward(session);
             case 'reload': return await chromium.reload(session);
             case 'state': case 'snapshot': return await chromium.snapshot(session, { elements: 'all' });
-            default: return { ok: false, error: 'unknown action: ' + action, actions: ['click', 'type', 'press', 'scroll', 'eval', 'extract', 'screenshot', 'navigate', 'back', 'forward', 'reload', 'state'] };
+            default: return { ok: false, error: 'unknown action: ' + action, actions: ['click', 'type', 'press', 'select', 'check', 'hover', 'waitFor', 'frames', 'scroll', 'eval', 'extract', 'screenshot', 'navigate', 'back', 'forward', 'reload', 'state'] };
           }
         });
       }
@@ -610,15 +621,22 @@ const server = http.createServer(async (req, res) => {
         fill: (s, b) => chromium.type(s, b),
         press: (s, b) => chromium.press(s, b),
         key: (s, b) => chromium.press(s, b),
+        select: (s, b) => chromium.select(s, b),
+        check: (s, b) => chromium.check(s, b),
+        uncheck: (s, b) => chromium.check(s, Object.assign({}, b, { checked: false })),
+        hover: (s, b) => chromium.hover(s, b),
+        waitfor: (s, b) => chromium.waitFor(s, b),
+        frames: (s) => chromium.frames(s),
         scroll: (s, b) => chromium.scroll(s, b),
         eval: (s, b) => chromium.evalJs(s, b.code || b.value),
         back: (s) => chromium.back(s),
         forward: (s) => chromium.forward(s),
         reload: (s) => chromium.reload(s)
       };
-      if (verbs[sub] && req.method === 'POST') {
+      const verbKey = String(sub || '').toLowerCase();
+      if (verbs[verbKey] && req.method === 'POST') {
         const b = await parseBody(req);
-        return withSession(async (session) => await verbs[sub](session, b));
+        return withSession(async (session) => await verbs[verbKey](session, b));
       }
 
       if (sub === 'close' || (!sub && req.method === 'DELETE')) {

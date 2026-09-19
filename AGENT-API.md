@@ -124,6 +124,11 @@ Sab kuch HTTP se, isliye koi external agent (Manus AI style) ise easily drive ka
 | `POST /api/browser/<id>/act` | `{action:"click\|type\|press\|scroll\|eval\|extract\|screenshot\|back\|forward\|reload\|state", …}` |
 | `POST /api/browser/<id>/click` | `{ref}` ya `{text:"Sign in"}` ya `{selector}` ya `{x,y}` — asli mouse click |
 | `POST /api/browser/<id>/type` | `{ref\|selector\|text_selector\|x,y, text, submit?:true, clear?}` — asli keyboard |
+| `POST /api/browser/<id>/select` | `{selector\|ref\|name, value:"India"\|option:"May"\|index:2}` — `<select>` dropdown (form ka sabse bada blocker) |
+| `POST /api/browser/<id>/check` | `{selector\|ref, checked:true\|false}` — checkbox/radio (asli click + label/DOM fallback) |
+| `POST /api/browser/<id>/hover` | `{selector\|text}` — menus/tooltips |
+| `POST /api/browser/<id>/waitfor` | `{selector\|text\|url\|gone\|ms, timeout}` — multi-step forms ke beech ruko |
+| `GET  /api/browser/<id>/frames` | page ke saare frames (iframe forms) — baaki ops frames ke andar bhi dhundo |
 | `POST /api/browser/<id>/press` | `{key:"Enter\|Tab\|PageDown…"}` |
 | `POST /api/browser/<id>/scroll` | `{y:800}` ya `{to:"bottom"}` ya `{ref}` (element tak) |
 | `POST /api/browser/<id>/eval` | `{code:"document.title"}` |
@@ -160,9 +165,13 @@ curl -X POST https://webos-inte.onrender.com/api/browser/task -H 'content-type: 
 }'
 ```
 
-Task actions: `navigate · click · type · press · scroll · wait {ms} · eval · extract/read · screenshot ·
-back · forward · reload · state`. Har step ka result milta hai (`ok`, `ms`, `url`, `title`, error) aur
+Task actions: `navigate · click · type · press · select · check · hover · waitFor · scroll · wait {ms} ·
+eval · extract/read · screenshot · back · forward · reload · state · frames`. Har step ka result milta hai (`ok`, `ms`, `url`, `title`, error) aur
 `sessionId` lauta kar aap wahi session aage drive kar sakte ho (cookies/login bane rehte hain).
+
+**Form-heavy flows:** `select` native `<select>` aur **custom dropdowns** (role=combobox, Google jaise) dono
+handle karta hai; `check/uncheck` styled radio/checkbox pe bhi chalta hai; `waitFor` multi-step forms ke
+beech rukta hai; `frames` iframe wale forms dikhata hai. Poora worked example: **[SIGNUP-DEMO.md](SIGNUP-DEMO.md)**.
 
 **Element refs:** `state`/`navigate` ke response me har link/button/input ka `ref` aata hai
 (`{ref, kind, tag, text, rect, inView}`). `click {ref}` / `type {ref, text}` refs ko use karo —

@@ -128,7 +128,12 @@
             <option value="navigate">navigate</option>
             <option value="click">click</option>
             <option value="type">type</option>
+            <option value="select">select (dropdown)</option>
+            <option value="check">check (checkbox/radio)</option>
+            <option value="uncheck">uncheck</option>
+            <option value="hover">hover</option>
             <option value="press">press</option>
+            <option value="waitFor">waitFor</option>
             <option value="scroll">scroll</option>
             <option value="eval">eval (JS)</option>
             <option value="extract">extract (text)</option>
@@ -143,6 +148,7 @@
           <label>ref</label><input data-cr="ref" placeholder="Refs tab se ref number (jaise 42)">
           <label>selector</label><input data-cr="selector" placeholder="CSS selector (optional)">
           <label>key</label><input data-cr="key" placeholder="Enter / Tab / Escape …">
+          <label>option</label><input data-cr="option" placeholder="select ke liye option (label ya value)">
           <label>x,y</label><input data-cr="xy" placeholder="650,400 (optional)">
         </div>
         <div class="cr-row">
@@ -163,6 +169,7 @@
         <div class="cr-row">
           <button class="cr-run" data-cr="runtask">Task chalao ▶</button>
           <button class="cr-btn" data-cr="tmpl">Preset: search karo</button>
+          <button class="cr-btn" data-cr="tmpl2">Preset: signup flow (24 steps)</button>
         </div>
         <pre class="cr-out" data-cr="taskout">external agents: POST /api/browser/task {actions:[…]}</pre>
       </div>
@@ -376,6 +383,14 @@
         if (selector) body.selector = selector;
         if (key) body.key = key;
         if (xy && /^\d+\s*,\s*\d+$/.test(xy)) { const [x, y] = xy.split(',').map(s => Number(s.trim())); body.x = x; body.y = y; }
+        const option = (el('[data-cr="option"]', root).value || '').trim();
+        if (option) { body.option = option; body.value = option; }
+        if (act === 'waitFor') {
+          if (selector) body.selector = selector;
+          else if (text) body.text = text;
+          else if (url) body.url = url;
+          body.timeout = 20000;
+        }
         if (act === 'eval') body.code = text || el('[data-cr="text"]', root).value;
         if (act === 'type' && !body.ref && !body.selector && !body.x) body.focus = false;
 
@@ -569,6 +584,33 @@
           { action: 'navigate', url: 'https://duckduckgo.com' },
           { action: 'type', text_selector: 'Search', text: 'manus ai browser agent', submit: true },
           { action: 'extract', keep: true },
+          { action: 'screenshot' }
+        ], null, 2);
+      };
+      el('[data-cr="tmpl2"]', root).onclick = () => {
+        // poora multi-step signup: select dropdowns, checkbox, radio, waitFor — sab use hota hai
+        el('.cr-task', root).value = JSON.stringify([
+          { action: 'navigate', url: 'https://automationexercise.com/signup' },
+          { action: 'type', selector: 'input[data-qa="signup-name"]', text: 'WebOS Agent' },
+          { action: 'type', selector: 'input[data-qa="signup-email"]', text: 'webos.agent.' + Date.now() + '@example.com' },
+          { action: 'click', selector: 'button[data-qa="signup-button"]', elements: false },
+          { action: 'waitFor', selector: 'input[data-qa="password"]' },
+          { action: 'check', selector: '#id_gender1' },
+          { action: 'type', selector: 'input[data-qa="password"]', text: 'Agent@12345' },
+          { action: 'select', selector: '#days', value: '10' },
+          { action: 'select', selector: '#months', value: '5' },
+          { action: 'select', selector: '#years', value: '1995' },
+          { action: 'check', selector: '#newsletter' },
+          { action: 'type', selector: 'input[data-qa="first_name"]', text: 'Web' },
+          { action: 'type', selector: 'input[data-qa="last_name"]', text: 'Agent' },
+          { action: 'type', selector: 'input[data-qa="address"]', text: '42 Agent Street' },
+          { action: 'select', selector: 'select[data-qa="country"]', value: 'India' },
+          { action: 'type', selector: 'input[data-qa="state"]', text: 'UP' },
+          { action: 'type', selector: 'input[data-qa="city"]', text: 'Varanasi' },
+          { action: 'type', selector: 'input[data-qa="zipcode"]', text: '221001' },
+          { action: 'type', selector: 'input[data-qa="mobile_number"]', text: '9876543210' },
+          { action: 'click', selector: 'button[data-qa="create-account"]', elements: false },
+          { action: 'waitFor', text: 'ACCOUNT CREATED', timeout: 25000 },
           { action: 'screenshot' }
         ], null, 2);
       };

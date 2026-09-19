@@ -1,0 +1,19 @@
+Gmail signup — WebOS ke asli Chromium se (puppeteer/CDP), HTTP API se drive kiya gaya
+Final URL : https://accounts.google.com/lifecycle/steps/signup/username?TL=ACv9tzGtHgiPvuKPlCvp90H3srsvUGGEMNWCAEpXpuQnV3aQFLukZxXzj_pKDbNo&continue=https%3A%2F%2Faccounts.google.com%2FManageAccount%3Fnc%3D1&dsh=S-1791745544%3A1789793613103138&flowEntry=SignUp&flowName=GlifWebSignIn
+Title     : Create an email address Create a Gmail address for signing in to your Google Account
+Time      : 44.6 s
+
+Automation ne jo kiya:
+  - 1. First/Last name bhara
+  - 2. Next → birthday page (page text bhi mila: 215 chars)
+  - 3. Birthday + gender: Month/Gender custom dropdowns (role=combobox) se select kiye
+  - 4. "Create your own" radio select kiya, username (webosagentwxjy2) + password + confirm bhare
+  - Form submit / account create NAHI kiya (neeche reason)
+
+Yahan automation rukta hai: Google aage "phone number verification" + CAPTCHA maangta hai.
+Us gate ko bypass karna na technically reliable hai na ToS ke hisaab se sahi — isliye
+WebOS me human-in-the-loop rakha gaya hai: same live session me aap khud verification
+complete kar sakte ho (agent tab tak rukta hai), phir agent aage ka kaam kar sakta hai.
+
+--- page text (extract) ---
+Create an email address Create a Gmail address for signing in to your Google Account agentweb64@gmail.com webagent637@gmail.com Create your own Gmail address Create a Gmail address @gmail.com You can use letters, numbers & periods Next Use your existing email

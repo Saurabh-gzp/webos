@@ -105,6 +105,20 @@ const show = (o) => console.log(typeof o === 'string' ? o : JSON.stringify(o, nu
         return show(await cmdCall('chromium.act', { action: 'type', text: arg, submit: flags.has('--submit'), focus: flags.has('--focus') }));
       }
       if (sub === 'key' || sub === 'press') return show(await cmdCall('chromium.act', { action: 'press', key: arg || 'Enter' }));
+      if (sub === 'select') {
+        const sel = positional[1], opt = positional.slice(2).join(' ');
+        return show(await cmdCall('chromium.act', { action: 'select', selector: sel, value: opt }));
+      }
+      if (sub === 'check' || sub === 'uncheck') {
+        return show(await cmdCall('chromium.act', { action: 'check', selector: arg, checked: sub === 'check' }));
+      }
+      if (sub === 'hover') return show(await cmdCall('chromium.act', { action: 'hover', selector: arg }));
+      if (sub === 'wait') {
+        const args = /^\d+$/.test(arg) ? { ms: Number(arg) } : (arg.startsWith('http') ? { url: arg } : { selector: arg });
+        args.timeout = Number(process.env.WEBOS_TIMEOUT || 25000);
+        return show(await cmdCall('chromium.act', Object.assign({ action: 'waitFor' }, args)));
+      }
+      if (sub === 'frames') return show(await cmdCall('chromium.act', { action: 'frames' }));
       if (sub === 'scroll') return show(await cmdCall('chromium.act', { action: 'scroll', y: Number(arg) || 800 }));
       if (sub === 'eval') return show(await cmdCall('chromium.act', { action: 'eval', code: arg }));
       if (sub === 'shot' || sub === 'screenshot') return show(await cmdCall('chromium.screenshot', { full: flags.has('--full') }));
@@ -134,6 +148,8 @@ const show = (o) => console.log(typeof o === 'string' ? o : JSON.stringify(o, nu
   search "<query>" | extract <url> | websearch "<query>"
   chrome status | chrome open <url> | chrome goto <url> | chrome read [--text] | chrome els
   chrome click <ref|"text"> | chrome type "<text>" [--submit] | chrome key <Enter> | chrome scroll <y>
+  chrome select "<css>" "<option>" | chrome check "<css>" | chrome uncheck "<css>" | chrome hover "<css>"
+  chrome wait <css|text|url|ms> | chrome frames
   chrome eval "<js>" | chrome shot | chrome frame | chrome task '[{"action":"navigate","url":...}]' | chrome close [--all]
   notify "<text>" | theme [dark|light] [accent] | wallpaper "<css gradient>"
   do '{"op":"...","args":{...}}'`);
