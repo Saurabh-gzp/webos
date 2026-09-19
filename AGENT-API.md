@@ -205,8 +205,11 @@ node tools/agent-cli.js shell "mkdir /Home/agent && ls /Home"
 * Kitni bhi site `iframe` me nahi chalti — jo sites `X-Frame-Options: DENY` bhejti hain
   (Google search, kuch banks, kuch govt sites) unka full UI proxy me bhi block ho sakta hai.
   Unke liye `read` / `extract` (server-side text) use karo — wo hamesha kaam karta hai.
-* Search engine fallback automatic hai: DuckDuckGo → Bing HTML → Bing RSS.
-  `GET /api/search?q=…` response me `engine` field dekho.
+* Search engine fallback automatic hai aur **cloud IPs (Render/Vercel) ke liye tuned** hai:
+  SearXNG pool → Marginalia → Bing HTML → Bing RSS → Brave → DuckDuckGo → Google News → Wikipedia.
+  Har engine ke results ek relevance filter se guzarte hain (junk/off-topic feed reject hota hai).
+  `GET /api/search?q=…` ke response me `engine` + `errors` fields dekho ki kaunsa chala.
+  Results 3 minute cache hote hain (`cached: true`), aur rate-limited SearXNG instance 10 min skip hota hai.
 * Har `click`/`type` ke baad page ka naya snapshot 200-1200ms me aata hai; `settle` arg se
   wait badha sakte ho (`{"op":"click","args":{"ref":5,"settle":2000}}`).
 * Agent Console app (desktop pe) me live activity dekho: kaunsi op aayi, kya result mila.
