@@ -68,6 +68,10 @@ curl -s localhost:3000/api/exec -H 'content-type: application/json' \
   -d '{"cmd":"mkdir /Home/report && write /Home/report/r.md \"done\""}'
 ```
 
+Search ke baare me: DuckDuckGo/Bing **datacenter IPs** (Render/Vercel) ko alag treat karte hain —
+DDG bot-wall de deta hai. Isliye OS me multi-engine fallback hai jo cloud pe bhi kaam karta hai
+(`GET /api/search?q=…` ke response me `engine` field dekho ki kaunsa chalа).
+
 Ya ready-made CLI:
 
 ```bash
@@ -139,6 +143,9 @@ webos/
 
 * Kai sites apne full UI proxy me nahi de dengi (Google search, `X-Frame-Options: DENY` wali sites,
   heavy SPA anti-bot). Un ke liye `read` / `extract` (server-side text + links) use karo — wo hamesha chalta hai.
-* Search engine fallback: DuckDuckGo HTML → Bing HTML → Bing RSS (last wala sabse reliable nikalta hai).
+* Search engine stack (cloud IPs ke liye tuned): public SearXNG pool (paulgo.io, searxng.site, opnxng.com)
+  → Marginalia API → Bing HTML → Bing RSS → Brave → DuckDuckGo → Wikipedia. Har engine ke results
+  ek relevance filter se guzarte hain, isliye koi engine kachra (regional/trending feed) bheje to
+  result reject ho kar next engine try hota hai. Instance cooldown + 3-min result cache bhi hai.
 * Login/cookie wali sessions kaam karti hain (form POST proxy se jaate hain) lekin kuch sites
   JS-based auth (captcha) maangti hain — wo robot ke liye ruk jayegi.
