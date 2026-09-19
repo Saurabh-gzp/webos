@@ -53,6 +53,7 @@
       const S = {
         sessionId: null,
         viewport: { width: 1280, height: 800 },
+        title: '', urlLast: '',
         stream: null,
         frameAt: 0,
         frames: 0,
@@ -214,6 +215,13 @@
         overlay.textContent = txt || '';
         overlay.style.display = txt ? 'flex' : 'none';
       }
+      /* status bar: hamesha "title · url" — title purane page ka na chipka rahe */
+      function setStatus(title, url) {
+        if (title !== undefined && title !== null) S.title = title;
+        if (url) { S.urlLast = url; omni.value = url; }
+        el('[data-cr="st-url"]', root).textContent =
+          (S.title ? S.title + '  ·  ' : '') + (S.urlLast || '—');
+      }
 
       /* ---------------- local (standalone) mode notice ---------------- */
       if (localMode() && !apiBase()) {
@@ -271,7 +279,7 @@
         S.viewport = r.data.viewport || { width: w || 1280, height: h || 800 };
         await refreshSessions(S.sessionId);
         attachStream(S.sessionId);
-        omni.value = r.data.url || '';
+        setStatus(r.data.title, r.data.url);
         setOverlay('');
         log('session ' + S.sessionId + ' → ' + (r.data.url || ''), 'open');
         afterAction(r.data);
@@ -291,8 +299,7 @@
               screen.src = 'data:image/jpeg;base64,' + d.jpeg;
               S.frames++; S.frameAt = Date.now();
             } else if (d.type === 'nav') {
-              if (d.url) { omni.value = d.url; }
-              el('[data-cr="st-url"]', root).textContent = (d.title || '') + (d.url ? '  ·  ' + d.url : '');
+              setStatus(d.title, d.url);
             } else if (d.type === 'hello') {
               S.viewport = d.viewport || S.viewport;
               setOverlay('');
@@ -325,10 +332,7 @@
       /* ---------------- response handling ---------------- */
       function afterAction(data) {
         if (!data) return;
-        if (data.url !== undefined) {
-          omni.value = data.url || omni.value;
-          el('[data-cr="st-url"]', root).textContent = (data.title || '') + (data.url ? '  ·  ' + data.url : '');
-        }
+        if (data.url !== undefined) setStatus(data.title, data.url);
         if (data.elements) { S.elements = data.elements; renderElements(data.elements); }
         if (data.text) { S.text = data.text; }
         if (data.service_worker === undefined && data.ok === false) log('action fail: ' + (data.error || ''), 'error');
@@ -454,7 +458,7 @@
         const lastText = [...(d.results || [])].reverse().find(x => x.text);
         if (lastText) { textBox.textContent = lastText.text; }
         log('task ' + d.steps + '/' + d.total + (d.ok ? ' ok' : ' failed'), d.ok ? 'task' : 'error');
-        if (d.final && d.final.url) omni.value = d.final.url;
+        if (d.final) setStatus(d.final.title, d.final.url);
         return d;
       }
 
@@ -510,7 +514,7 @@
           body: JSON.stringify({ x, y, elements: false })
         });
         S.busy = false;
-        if (r.data && r.data.url) { omni.value = r.data.url; el('[data-cr="st-url"]', root).textContent = r.data.url; }
+        if (r.data && r.data.url) setStatus(r.data.title, r.data.url);
         log('click ' + x + ',' + y + ' → ' + ((r.data && r.data.url) || ''), 'human');
       });
       screen.addEventListener('wheel', async (e) => {
@@ -592,7 +596,7 @@
           sessSel.value = first.id;
           attachStream(first.id);
           setOverlay('');
-          omni.value = first.url || '';
+          setStatus(first.title, first.url);
         } else {
           setOverlay('Chromium start ho raha hai…');
           await newSession('https://example.com');
