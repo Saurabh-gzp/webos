@@ -1,0 +1,31 @@
+Real signup (live) — WebOS Chromium se
+Email used: webos.agent.1789794226781@example.com
+Task: 25/25 steps, 110009ms
+Page after submit: ACCOUNT CREATED!
+Final URL: https://automationexercise.com/account_created
+
+   0 navigate  ✓ 4494ms 
+   1 type      ✓ 10103ms 
+   2 type      ✓ 12198ms 
+   3 click     ✓ 18302ms 
+   4 waitfor   ✓ 1104ms 
+   5 check     ✓ 1195ms 
+   6 type      ✓ 4801ms 
+   7 select    ✓ 496ms 
+   8 select    ✓ 502ms 
+   9 select    ✓ 499ms 
+  10 check     ✓ 903ms 
+  11 check     ✓ 1998ms 
+  12 type      ✓ 2200ms 
+  13 type      ✓ 5203ms 
+  14 type      ✓ 6299ms 
+  15 select    ✓ 1308ms 
+  16 type      ✓ 3089ms 
+  17 type      ✓ 2603ms 
+  18 type      ✓ 4505ms 
+  19 type      ✓ 6591ms 
+  20 screenshot ✓ 1200ms 
+  21 click     ✓ 15704ms 
+  22 waitfor   ✓ 6ms 
+  23 extract   ✓ 1ms 
+  24 screenshot ✓ 398ms 
