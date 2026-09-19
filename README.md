@@ -23,15 +23,35 @@ page padhna, buttons click karna, forms bharna.
 
 ---
 
-## Chalane ka tarika
+## Chalane ke do tarike
 
+### 1. Single file (zero setup) — `webos-standalone.html`
+CSS + saare apps ek hi file me inline hain, aur ek chhota **client-side backend**
+(filesystem, shell, agent bus — sab browser me) saath chalta hai.
+File ko **double-click karo, preview me daalo, ya kisi bhi static host (GitHub Pages,
+Netlify drop) pe rakho** — UI poora chalega, server ki zaroorat nahi.
+
+| Kaam karta hai (single file) | Server chahiye |
+|---|---|
+| Window manager, saare apps, themes, toasts | Real web proxy (kisi bhi site ko OS browser me kholna)* |
+| Virtual filesystem (localStorage me persist) | Page padhna / click / type (agent refs) |
+| Shell (ls, cd, cat, mkdir, write, open, theme, notify…) | Multi-engine web search |
+| Agent commands (console se: `agent('open', {app:'files'})`) | HTTP agent API (`/api/agent/cmd`, `/api/agent/state`) |
+
+\* simple sites (example.com, Wikipedia) iframe me khul jaati hain, lekin Google/X-Frame-Options
+DENY wali sites browser security ki wajah se nahi khul sakti — unke liye server mode.
+
+```bash
+node tools/build-standalone.js     # ya: npm run build  -> webos-standalone.html
+```
+
+### 2. Server mode (full power)
 ```bash
 cd webos
 node server.js          # http://localhost:3000
 ```
-
-Koi dependency nahi chahiye — sirf Node 18+. Browser me `http://localhost:3000` kholo,
-OS boot ho jayega (Browser + Agent Console windows ke saath).
+Koi dependency nahi — sirf Node 18+. Isi mode me web proxy, search aur agent HTTP API milti hai
+(yahi Render pe deploy hua hai).
 
 ## Apps
 

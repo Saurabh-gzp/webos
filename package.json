@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "build": "node tools/build-standalone.js",
     "agent": "node tools/agent-cli.js"
   },
   "engines": { "node": ">=18" },

@@ -1,0 +1,3398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WebOS 1.0</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖥️</text></svg>">
+<style>
+/* ================= WebOS 1.0 — desktop theme ================= */
+:root {
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --accent: #6b8cff;
+  --accent-2: #a678ff;
+  --ok: #35d07f;
+  --warn: #ffb42e;
+  --err: #ff5c6c;
+  --radius: 12px;
+  --blur: saturate(150%) blur(18px);
+}
+
+.theme-dark {
+  --bg: #0c0e14;
+  --wall: radial-gradient(1200px 800px at 15% 10%, #1d2b5e 0%, transparent 55%),
+          radial-gradient(1000px 700px at 85% 85%, #43206b 0%, transparent 55%),
+          linear-gradient(160deg, #0a0c12 0%, #131726 55%, #0a0c12 100%);
+  --surface: rgba(20, 23, 34, .86);
+  --surface-2: rgba(29, 33, 47, .92);
+  --surface-3: rgba(38, 43, 60, .9);
+  --line: rgba(255, 255, 255, .09);
+  --text: #e9edf7;
+  --muted: #99a2bb;
+  --shadow: 0 24px 60px rgba(0, 0, 0, .55), 0 2px 0 rgba(255, 255, 255, .04) inset;
+}
+.theme-light {
+  --bg: #eef1f8;
+  --wall: radial-gradient(1200px 800px at 15% 10%, #cfdcff 0%, transparent 55%),
+          radial-gradient(1000px 700px at 85% 85%, #e6d6ff 0%, transparent 55%),
+          linear-gradient(160deg, #f6f8ff 0%, #e8ecf8 60%, #f6f8ff 100%);
+  --surface: rgba(255, 255, 255, .92);
+  --surface-2: rgba(255, 255, 255, .96);
+  --surface-3: rgba(244, 246, 252, .96);
+  --line: rgba(10, 20, 60, .12);
+  --text: #131829;
+  --muted: #5b6480;
+  --shadow: 0 20px 50px rgba(20, 30, 70, .18), 0 1px 0 #fff inset;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+button, input, textarea, select { font-family: inherit; color: inherit; }
+.hidden { display: none !important; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(140, 150, 180, .35); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(140, 150, 180, .55); background-clip: padding-box; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------------- boot ---------------- */
+#boot {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  background: radial-gradient(700px 500px at 50% 40%, #1a2246 0%, #07080d 70%);
+  color: #e9edf7; transition: opacity .45s ease;
+}
+#boot.boot-done { opacity: 0; pointer-events: none; }
+.boot-logo { font-size: 68px; line-height: 1; color: #7c9cff; text-shadow: 0 0 40px rgba(124, 156, 255, .8); animation: spinIn 1.1s ease both; }
+.boot-name { font-size: 34px; font-weight: 700; letter-spacing: .14em; }
+.boot-sub { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: #8d96b5; }
+.boot-bar { width: 240px; height: 3px; background: rgba(255, 255, 255, .12); border-radius: 3px; overflow: hidden; margin-top: 12px; }
+.boot-bar i { display: block; height: 100%; width: 38%; background: linear-gradient(90deg, #6b8cff, #a678ff); animation: slide 1.1s ease-in-out infinite; }
+.boot-log { font: 11px/1.7 var(--mono); color: #7b849e; margin-top: 14px; height: 96px; overflow: hidden; text-align: left; width: 320px; }
+@keyframes slide { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
+@keyframes spinIn { from { transform: rotate(-90deg) scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------------- desktop ---------------- */
+#os { position: fixed; inset: 0; }
+#wallpaper { position: absolute; inset: 0; background: var(--wall); background-size: cover; transition: background .4s ease; }
+#desktop { position: absolute; inset: 0 0 46px 0; }
+#windows { position: absolute; inset: 0; }
+
+#icons { position: absolute; inset: 12px auto 12px 12px; display: flex; flex-direction: column; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
+.dicon {
+  width: 92px; padding: 10px 6px; border-radius: 10px; text-align: center; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; user-select: none;
+  border: 1px solid transparent;
+}
+.dicon:hover { background: rgba(255, 255, 255, .09); border-color: var(--line); }
+.dicon.sel { background: rgba(107, 140, 255, .22); border-color: rgba(107, 140, 255, .5); }
+.dicon .ic { font-size: 30px; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .45)); }
+.dicon .nm { font-size: 11.5px; color: #eaeefb; text-shadow: 0 1px 3px rgba(0, 0, 0, .7); word-break: break-word; }
+
+/* ---------------- windows ---------------- */
+.win {
+  position: absolute; min-width: 320px; min-height: 200px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: winIn .16s ease both;
+}
+@keyframes winIn { from { transform: scale(.97) translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+.win.max { border-radius: 0; }
+.win.min { display: none; }
+.win-titlebar {
+  height: 38px; flex: 0 0 38px; display: flex; align-items: center; gap: 8px; padding: 0 6px 0 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .015));
+  border-bottom: 1px solid var(--line); cursor: grab; user-select: none;
+}
+.theme-light .win-titlebar { background: linear-gradient(180deg, #f3f5fd, #e9edf8); }
+.win-titlebar:active { cursor: grabbing; }
+.win-icon { font-size: 15px; }
+.win-title { flex: 1; font-size: 12.5px; font-weight: 600; letter-spacing: .2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.win-title .sub { color: var(--muted); font-weight: 400; margin-left: 6px; font-size: 11px; }
+.win-controls { display: flex; gap: 4px; }
+.win-controls button {
+  width: 26px; height: 24px; border: 0; border-radius: 7px; background: transparent; color: var(--muted);
+  font-size: 13px; line-height: 1; cursor: pointer;
+}
+.win-controls button:hover { background: rgba(255, 255, 255, .12); color: var(--text); }
+.theme-light .win-controls button:hover { background: rgba(10, 20, 60, .1); }
+.win-controls .win-close:hover { background: var(--err); color: #fff; }
+.win-body { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.win-resize { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize; z-index: 5; }
+.win-resize::after {
+  content: ''; position: absolute; right: 3px; bottom: 3px; width: 7px; height: 7px;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); opacity: .6;
+}
+.win.focus { border-color: rgba(107, 140, 255, .45); }
+
+/* ---------------- taskbar ---------------- */
+#taskbar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 46px; display: flex; align-items: center; gap: 8px;
+  padding: 0 10px; background: var(--surface-2); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border-top: 1px solid var(--line); z-index: 500;
+}
+#startBtn {
+  display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 9px;
+  border: 1px solid var(--line); background: linear-gradient(135deg, rgba(107, 140, 255, .28), rgba(166, 120, 255, .22));
+  color: var(--text); cursor: pointer; font-size: 12.5px; font-weight: 600;
+}
+#startBtn:hover { filter: brightness(1.2); }
+.start-mark { color: var(--accent); font-size: 15px; }
+#tasklist { flex: 1; display: flex; gap: 6px; overflow-x: auto; }
+.task {
+  display: flex; align-items: center; gap: 7px; height: 34px; max-width: 210px; padding: 0 12px;
+  border-radius: 9px; border: 1px solid transparent; background: rgba(255, 255, 255, .05);
+  color: var(--text); font-size: 12px; cursor: pointer; white-space: nowrap; overflow: hidden;
+}
+.theme-light .task { background: rgba(10, 20, 60, .06); }
+.task:hover { background: rgba(255, 255, 255, .12); }
+.task.active { background: rgba(107, 140, 255, .26); border-color: rgba(107, 140, 255, .4); }
+.task span.t { overflow: hidden; text-overflow: ellipsis; }
+.tray { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+.pill { display: flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 20px; background: rgba(255, 255, 255, .07); font-size: 11px; }
+.pill .dot { width: 7px; height: 7px; border-radius: 50%; background: #666e88; }
+.pill.on .dot { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.pill.busy .dot { background: var(--warn); box-shadow: 0 0 8px var(--warn); animation: pulse .9s infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+.tray-btn { background: transparent; border: 0; cursor: pointer; font-size: 14px; color: var(--muted); padding: 4px 6px; border-radius: 7px; }
+.tray-btn:hover { background: rgba(255, 255, 255, .1); color: var(--text); }
+#clock { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--text); min-width: 62px; text-align: right; }
+
+/* ---------------- start menu ---------------- */
+#startmenu {
+  position: absolute; left: 10px; bottom: 54px; width: 320px; z-index: 600;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); overflow: hidden;
+  animation: winIn .14s ease both;
+}
+.sm-head { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 16px 8px; font-size: 13px; }
+.sm-head span { font-size: 11px; color: var(--muted); }
+.sm-apps { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 6px 10px 10px; max-height: 340px; overflow: auto; }
+.sm-app { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 9px; cursor: pointer; font-size: 12.5px; }
+.sm-app:hover { background: rgba(107, 140, 255, .2); }
+.sm-app .ic { font-size: 18px; }
+.sm-foot { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; border-top: 1px solid var(--line); font-size: 10.5px; color: var(--muted); }
+.sm-foot code { font-family: var(--mono); font-size: 10.5px; }
+
+/* ---------------- toasts ---------------- */
+#toasts { position: absolute; right: 14px; bottom: 58px; display: flex; flex-direction: column; gap: 8px; z-index: 700; max-width: 340px; }
+.toast {
+  background: var(--surface-2); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: 10px; padding: 11px 14px; box-shadow: var(--shadow); font-size: 12.5px;
+  animation: toastIn .22s ease both; backdrop-filter: var(--blur);
+}
+.toast.ok { border-left-color: var(--ok); }
+.toast.err { border-left-color: var(--err); }
+.toast.warn { border-left-color: var(--warn); }
+.toast b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 3px; }
+@keyframes toastIn { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------------- shared app widgets ---------------- */
+.toolbar {
+  display: flex; align-items: center; gap: 6px; padding: 7px 8px; border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, .03); flex: 0 0 auto;
+}
+.theme-light .toolbar { background: #f4f6fc; }
+.tb-btn {
+  height: 28px; min-width: 28px; padding: 0 9px; border-radius: 8px; border: 1px solid var(--line);
+  background: rgba(255, 255, 255, .06); color: var(--text); font-size: 12px; cursor: pointer;
+}
+.theme-light .tb-btn { background: #fff; }
+.tb-btn:hover { background: rgba(107, 140, 255, .22); border-color: rgba(107, 140, 255, .4); }
+.tb-btn:disabled { opacity: .4; cursor: default; }
+.tb-btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: #fff; font-weight: 600; }
+.inp {
+  flex: 1; height: 30px; padding: 0 11px; border-radius: 8px; border: 1px solid var(--line);
+  background: rgba(0, 0, 0, .22); color: var(--text); font-size: 12.5px; outline: none;
+}
+.theme-light .inp { background: #fff; }
+.inp:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(107, 140, 255, .18); }
+.statusbar { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; padding: 5px 10px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+.mono { font-family: var(--mono); }
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 8px; color: var(--muted); font-size: 12.5px; text-align: center; padding: 20px; }
+.empty .big { font-size: 34px; }
+
+/* file browser / lists */
+.split { display: flex; flex: 1; min-height: 0; }
+.side { width: 190px; flex: 0 0 190px; border-right: 1px solid var(--line); overflow: auto; padding: 8px; }
+.side .item { padding: 7px 9px; border-radius: 8px; font-size: 12px; cursor: pointer; display: flex; gap: 7px; align-items: center; }
+.side .item:hover { background: rgba(255, 255, 255, .08); }
+.side .item.active { background: rgba(107, 140, 255, .24); }
+.list { flex: 1; overflow: auto; padding: 6px; }
+.row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; font-size: 12.5px; cursor: pointer; }
+.row:hover { background: rgba(255, 255, 255, .07); }
+.row.sel { background: rgba(107, 140, 255, .22); }
+.row .ic { font-size: 16px; }
+.row .meta { margin-left: auto; font-size: 11px; color: var(--muted); }
+
+textarea.editor, .editor-area {
+  flex: 1; width: 100%; resize: none; border: 0; outline: none; padding: 14px;
+  background: transparent; color: var(--text); font: 13px/1.65 var(--mono);
+}
+
+/* terminal */
+.term { flex: 1; overflow: auto; padding: 12px 14px; font: 12.5px/1.6 var(--mono); background: rgba(0, 0, 0, .3); }
+.theme-light .term { background: #10131c; color: #dbe3f5; }
+.term .line { white-space: pre-wrap; word-break: break-word; }
+.term .cmd { color: #8be28b; }
+.term .err { color: #ff8591; }
+.term-input-row { display: flex; gap: 8px; padding: 8px 10px; border-top: 1px solid var(--line); background: rgba(0, 0, 0, .18); }
+.term-input-row .ps1 { color: var(--accent); font: 12.5px var(--mono); align-self: center; white-space: nowrap; }
+.term-input-row input { flex: 1; background: transparent; border: 0; outline: none; font: 12.5px var(--mono); color: var(--text); }
+
+/* browser */
+.br-frame { flex: 1; position: relative; background: #fff; }
+.br-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
+.br-tabview { position: absolute; inset: 0; background: #fff; }
+.br-progress { position: absolute; left: 0; top: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); width: 0; transition: width .25s ease; }
+.br-progress.on { width: 92%; }
+.br-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--muted); font-size: 12.5px; gap: 10px; }
+.spin { width: 15px; height: 15px; border: 2px solid rgba(140, 150, 180, .35); border-top-color: var(--accent); border-radius: 50%; animation: sp .8s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+.br-side { width: 300px; flex: 0 0 300px; border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+.br-side.hide { display: none; }
+.tabs { display: flex; gap: 3px; overflow-x: auto; padding: 4px 6px 0; background: rgba(0, 0, 0, .16); }
+.theme-light .tabs { background: #e9edf8; }
+.tab {
+  display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 8px 8px 0 0; font-size: 11.5px;
+  max-width: 190px; cursor: pointer; background: rgba(255, 255, 255, .05); color: var(--muted);
+}
+.tab.active { background: var(--surface); color: var(--text); }
+.tab .x { opacity: .6; font-size: 12px; }
+.tab .x:hover { opacity: 1; color: var(--err); }
+.tab .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); padding: 6px 6px 0; }
+.panel-tabs button { flex: 1; padding: 7px 4px; border: 0; background: transparent; color: var(--muted); font-size: 11.5px; cursor: pointer; border-bottom: 2px solid transparent; }
+.panel-tabs button.active { color: var(--text); border-bottom-color: var(--accent); }
+.panel-body { flex: 1; overflow: auto; padding: 10px; font-size: 12px; }
+.el { padding: 6px 8px; border-radius: 7px; border: 1px solid var(--line); margin-bottom: 5px; cursor: pointer; background: rgba(255, 255, 255, .03); }
+.el:hover { background: rgba(107, 140, 255, .18); }
+.el .k { font-size: 9.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-right: 6px; }
+.el .u { color: var(--muted); font-size: 10.5px; word-break: break-all; }
+.reader-text { white-space: pre-wrap; font-size: 12px; line-height: 1.65; }
+.kbd { font: 10.5px var(--mono); padding: 2px 5px; border-radius: 5px; background: rgba(255, 255, 255, .1); border: 1px solid var(--line); }
+
+/* agent console */
+.ag-log { flex: 1; overflow: auto; padding: 8px; font: 11.5px/1.6 var(--mono); }
+.ag-row { display: flex; gap: 8px; padding: 4px 6px; border-radius: 6px; }
+.ag-row:hover { background: rgba(255, 255, 255, .05); }
+.ag-row .ts { color: var(--muted); flex: 0 0 74px; }
+.ag-row .kind { flex: 0 0 68px; font-weight: 700; }
+.kind.cmd { color: var(--accent); }
+.kind.ok { color: var(--ok); }
+.kind.error { color: var(--err); }
+.kind.timeout { color: var(--warn); }
+.kind.system { color: var(--muted); }
+.ag-row .txt { flex: 1; word-break: break-word; }
+
+/* settings + misc */
+.section { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.section h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.sw { width: 34px; height: 34px; border-radius: 9px; cursor: pointer; border: 2px solid transparent; }
+.sw.on { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
+.wall-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.wall { height: 62px; border-radius: 9px; cursor: pointer; border: 2px solid transparent; }
+.wall.on { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
+.rowline { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; font-size: 12.5px; }
+.kv { display: grid; grid-template-columns: 130px 1fr; gap: 6px 12px; font-size: 12px; }
+.kv b { color: var(--muted); font-weight: 500; }
+.calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px; }
+.calc-grid button { height: 52px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); font-size: 16px; cursor: pointer; }
+.calc-grid button:hover { background: rgba(107, 140, 255, .22); }
+.calc-out { text-align: right; padding: 16px; font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; overflow: hidden; }
+.doc h1 { font-size: 20px; margin: 4px 0 10px; }
+.doc h2 { font-size: 15px; margin: 18px 0 8px; color: var(--accent); }
+.doc code { font-family: var(--mono); font-size: 11.5px; background: rgba(255, 255, 255, .09); padding: 2px 5px; border-radius: 5px; }
+.theme-light .doc code { background: rgba(10, 20, 60, .07); }
+.doc pre { background: rgba(0, 0, 0, .3); padding: 10px 12px; border-radius: 9px; overflow: auto; font-size: 11.5px; border: 1px solid var(--line); }
+.theme-light .doc pre { background: #f2f4fb; }
+.doc table { border-collapse: collapse; font-size: 12px; width: 100%; }
+.doc th, .doc td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; }
+.doc p, .doc li { font-size: 12.5px; line-height: 1.7; }
+.doc { padding: 6px 4px; }
+.badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 20px; background: rgba(107, 140, 255, .25); border: 1px solid rgba(107, 140, 255, .4); }
+.mon-bar { height: 8px; border-radius: 5px; background: rgba(255, 255, 255, .09); overflow: hidden; }
+.mon-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+
+</style>
+</head>
+<body class="theme-dark">
+
+<!-- ============ BOOT SCREEN ============ -->
+<div id="boot">
+  <div class="boot-logo">◈</div>
+  <div class="boot-name">WebOS</div>
+  <div class="boot-sub">agent-operable browser operating system</div>
+  <div class="boot-bar"><i></i></div>
+  <div class="boot-log" id="bootLog"></div>
+</div>
+
+<!-- ============ DESKTOP ============ -->
+<div id="os" class="hidden">
+  <div id="wallpaper"></div>
+  <div id="desktop">
+    <div id="icons"></div>
+    <div id="windows"></div>
+  </div>
+
+  <!-- taskbar -->
+  <div id="taskbar">
+    <button id="startBtn" title="Start (Ctrl+Space)"><span class="start-mark">◈</span><span class="start-text">WebOS</span></button>
+    <div id="tasklist"></div>
+    <div class="tray">
+      <span id="agentPill" class="pill" title="Agent bus status"><span class="dot"></span><span id="agentPillText">agent</span></span>
+      <button id="themeBtn" class="tray-btn" title="Theme toggle">🌗</button>
+      <span id="clock"></span>
+    </div>
+  </div>
+
+  <!-- start menu -->
+  <div id="startmenu" class="hidden">
+    <div class="sm-head"><b>WebOS</b><span>v1.0</span></div>
+    <div id="sm-apps" class="sm-apps"></div>
+    <div class="sm-foot">
+      <span id="smHint">Agent API: <code>/api/agent/cmd</code></span>
+      <button id="smLock" class="tray-btn" title="Restart OS">⟳</button>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+</div>
+
+<!-- ============ SCRIPTS (inlined standalone bundle) ============ -->
+<script>
+/* WebOS standalone build — generated by tools/build-standalone.js.
+   Do not edit this file: edit public/** and re-run the build script. */
+window.WEBOS_LOCAL = true;
+</script>
+<script>
+/* ============================================================
+   local.js — WebOS "local mode"
+   ------------------------------------------------------------
+   Activates only when window.WEBOS_LOCAL === true (single-file build).
+   It gives the OS a complete client-side backend so the UI works with
+   NO server at all: virtual filesystem (localStorage), shell, agent bus
+   and status endpoints. It installs a fetch() shim that answers /api/*
+   requests locally, so none of the app code had to change.
+   ============================================================ */
+(function () {
+  'use strict';
+  if (!window.WEBOS_LOCAL) return;
+
+  const LS_FS = 'webos.local.fs';
+  const VERSION = '1.0.0-local';
+
+  /* ---------------- virtual filesystem ---------------- */
+  const now = () => Date.now();
+  const fileNode = (name, content = '') => ({ type: 'file', name, content, created: now(), modified: now() });
+  const dirNode = (name) => ({ type: 'dir', name, children: {}, created: now(), modified: now() });
+
+  function seed() {
+    const r = dirNode('');
+    r.children.Home = dirNode('Home');
+    const H = r.children.Home;
+    H.children.Documents = dirNode('Documents');
+    H.children.Downloads = dirNode('Downloads');
+    H.children.Projects = dirNode('Projects');
+    H.children.Pictures = dirNode('Pictures');
+    H.children['AGENT.md'] = fileNode('AGENT.md', [
+      '# WebOS — local mode',
+      '',
+      'Ye single-file build hai: poora OS browser ke andar hi chalta hai.',
+      '',
+      'Kaam karta hai:',
+      '  - window manager, saare apps, themes, notifications',
+      '  - virtual filesystem (browser ke localStorage me persist)',
+      '  - shell (ls, cd, cat, mkdir, write, open, theme, notify ...)',
+      '  - agent commands: console me chalao —',
+      '      WebOS.handleCommand({op:"open",app:"files"})',
+      '      WebOS.handleCommand({op:"shadow", app:"browser", args:{url:"https://example.com"}})',
+      '',
+      'Server mode (node server.js) me extra milta hai:',
+      '  - real web proxy (kisi bhi site ko OS browser me kholna)',
+      '  - page padhna / click / type (agent refs)',
+      '  - multi-engine web search',
+      '  - agent ke liye HTTP API: /api/agent/cmd, /api/agent/state',
+      ''
+    ].join('\n'));
+    H.children.Documents.children['welcome.txt'] = fileNode('welcome.txt',
+      'Welcome to WebOS (local mode)\n\nYe file browser ke localStorage me hai — refresh ke baad bhi rahegi.\n');
+    H.children.Documents.children['agent-quickstart.md'] = fileNode('agent-quickstart.md',
+      '# Agent quickstart (local mode)\n\nConsole me:\n  WebOS.handleCommand({op:"open",app:"browser",args:{url:"https://example.com"}})\n  WebOS.handleCommand({op:"theme",args:{mode:"light"}})\n  WebOS.handleCommand({op:"read"})\n');
+    H.children.Projects.children['notes.txt'] = fileNode('notes.txt', 'TODO:\n- [ ] server deploy karo (proxy + agent API ke liye)\n');
+    H.children.Pictures.children['README.txt'] = fileNode('README.txt', 'Pictures folder khaali hai.\n');
+    return r;
+  }
+
+  let root = null;
+  function load() {
+    if (root) return root;
+    try {
+      const raw = localStorage.getItem(LS_FS);
+      if (raw) { root = JSON.parse(raw); if (!root || root.type !== 'dir') root = seed(); }
+      else { root = seed(); save(); }
+    } catch (e) { root = seed(); }
+    return root;
+  }
+  function save() { try { localStorage.setItem(LS_FS, JSON.stringify(root)); } catch (e) {} }
+  const parts = (p) => String(p || '').split('/').map(s => s.trim()).filter(s => s && s !== '.');
+  const normalize = (p) => '/' + parts(p).join('/');
+
+  function get(pathStr) {
+    let node = load();
+    for (const part of parts(pathStr)) {
+      if (!node || node.type !== 'dir') return null;
+      node = node.children[part];
+      if (!node) return null;
+    }
+    return node;
+  }
+  function parentOf(pathStr) {
+    const ps = parts(pathStr);
+    if (!ps.length) return { parent: null, name: null };
+    return { parent: get('/' + ps.slice(0, -1).join('/')), name: ps[ps.length - 1] };
+  }
+
+  const vfs = {
+    list(pathStr) {
+      const n = get(pathStr);
+      if (!n) return { error: 'no such directory: ' + pathStr };
+      if (n.type !== 'dir') return { error: 'not a directory: ' + pathStr };
+      const entries = Object.values(n.children).map(x => ({
+        name: x.name, type: x.type,
+        size: x.type === 'file' ? (x.content || '').length : Object.keys(x.children).length,
+        modified: x.modified
+      })).sort((a, b) => (a.type === b.type ? a.name.localeCompare(b.name) : (a.type === 'dir' ? -1 : 1)));
+      return { path: normalize(pathStr), entries };
+    },
+    read(pathStr) {
+      const n = get(pathStr);
+      if (!n) return { error: 'no such file: ' + pathStr };
+      if (n.type !== 'file') return { error: 'is a directory: ' + pathStr };
+      return { path: normalize(pathStr), content: n.content || '', size: (n.content || '').length, modified: n.modified };
+    },
+    write(pathStr, content) {
+      const ps = parts(pathStr);
+      if (!ps.length) return { error: 'invalid path' };
+      const dirPath = '/' + ps.slice(0, -1).join('/');
+      let dir = get(dirPath);
+      if (!dir || dir.type !== 'dir') { vfs.mkdir(dirPath, true); dir = get(dirPath); }
+      if (!dir) return { error: 'no such directory: ' + dirPath };
+      const name = ps[ps.length - 1];
+      const ex = dir.children[name];
+      if (ex && ex.type === 'dir') return { error: 'is a directory: ' + pathStr };
+      if (ex) { ex.content = String(content == null ? '' : content); ex.modified = now(); }
+      else dir.children[name] = fileNode(name, content);
+      dir.modified = now(); save();
+      return { ok: true, path: normalize(pathStr), bytes: String(content || '').length, action: ex ? 'updated' : 'created' };
+    },
+    mkdir(pathStr, createParents) {
+      const ps = parts(pathStr);
+      let node = load();
+      for (let i = 0; i < ps.length; i++) {
+        const name = ps[i];
+        if (!node.children[name]) {
+          if (i !== ps.length - 1 && !createParents) return { error: 'no such directory: /' + ps.slice(0, i + 1).join('/') };
+          node.children[name] = dirNode(name);
+        } else if (node.children[name].type !== 'dir') return { error: 'not a directory: /' + ps.slice(0, i + 1).join('/') };
+        node = node.children[name];
+      }
+      save();
+      return { ok: true, path: normalize(pathStr), action: 'created' };
+    },
+    rm(pathStr, recursive) {
+      const { parent, name } = parentOf(pathStr);
+      if (!parent || !name) return { error: 'cannot remove root' };
+      const node = parent.children[name];
+      if (!node) return { error: 'no such file or directory: ' + pathStr };
+      if (node.type === 'dir' && !recursive && Object.keys(node.children).length) return { error: 'directory not empty (use rm -r)' };
+      delete parent.children[name]; save();
+      return { ok: true, path: normalize(pathStr), action: 'removed' };
+    },
+    move(from, to, copy) {
+      const src = get(from);
+      if (!src) return { error: 'no such file: ' + from };
+      const clone = JSON.parse(JSON.stringify(src));
+      const dst = get(to);
+      const name = parts(to).pop();
+      if (dst && dst.type === 'dir') { dst.children[parts(from).pop()] = clone; dst.modified = now(); }
+      else {
+        const { parent, name: dn } = parentOf(to);
+        if (!parent) return { error: 'bad destination: ' + to };
+        clone.name = dn; parent.children[dn] = clone; parent.modified = now();
+      }
+      if (!copy) { const { parent: sp, name: sn } = parentOf(from); if (sp && sn) delete sp.children[sn]; }
+      save();
+      return { ok: true, from: normalize(from), to: normalize(to), action: copy ? 'copied' : 'moved' };
+    },
+    tree(pathStr, depth) {
+      const n = get(pathStr || '/');
+      if (!n) return { error: 'no such path: ' + pathStr };
+      const out = [];
+      const walk = (node, d, prefix) => {
+        if (node.type === 'file') { out.push({ path: prefix + node.name, type: 'file', size: (node.content || '').length }); return; }
+        if (d > 0) Object.keys(node.children).sort().forEach(k => walk(node.children[k], d - 1, prefix + node.name + '/'));
+      };
+      walk(n, depth || 3, '');
+      return { path: normalize(pathStr), entries: out };
+    },
+    search(query, pathStr) {
+      const needle = String(query || '').toLowerCase();
+      const hits = [];
+      const walk = (n, prefix) => {
+        if (n.type === 'file') {
+          const idx = (n.content || '').toLowerCase().indexOf(needle);
+          if (idx >= 0) hits.push({ path: prefix + n.name, line: (n.content || '').slice(0, idx).split('\n').length, snippet: (n.content || '').slice(Math.max(0, idx - 40), idx + 80).replace(/\n/g, ' ') });
+          return;
+        }
+        Object.keys(n.children).forEach(k => walk(n.children[k], prefix + n.name + '/'));
+      };
+      walk(get(pathStr || '/') || load(), '/');
+      return { query, hits, count: hits.length };
+    },
+    stats() {
+      let files = 0, dirs = 0, bytes = 0;
+      const walk = (n) => { if (n.type === 'file') { files++; bytes += (n.content || '').length; return; } dirs++; Object.values(n.children).forEach(walk); };
+      walk(load());
+      return { files, dirs, bytes };
+    }
+  };
+
+  /* ---------------- shell ---------------- */
+  const HELP = `WebOS Shell (local mode)
+  help  ls [path]  cd <path>  pwd  cat <file>
+  echo "text" [> file]   write <file> "text"   mkdir <dir>   touch <file>
+  rm [-r] <path>  cp <src> <dst>  mv <src> <dst>  tree [path]  find <text>
+  open <app>   browse <url>   apps   windows   sysinfo   date   whoami   clear
+  theme <dark|light>   wallpaper <css>
+
+Server mode (node server.js) me extra: read <url>, search <query>, agent <op>`;
+
+  function tokenize(line) {
+    const out = []; let cur = '', q = null;
+    for (const c of line) {
+      if (q) { if (c === q) q = null; else cur += c; }
+      else if (c === '"' || c === "'") q = c;
+      else if (/\s/.test(c)) { if (cur) { out.push(cur); cur = ''; } }
+      else cur += c;
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
+  function joinPath(cwd, p) {
+    if (!p) return cwd;
+    if (p.startsWith('/')) return '/' + parts(p).join('/');
+    const base = parts(cwd);
+    for (const part of parts(p)) { if (part === '..') base.pop(); else base.push(part); }
+    return '/' + base.join('/');
+  }
+  const histories = [];
+
+  async function run(cmdLine, cwd, isSub) {
+    cwd = cwd || '/Home';
+    const raw = String(cmdLine || '').trim();
+    if (!raw) return { out: '', cwd, code: 0 };
+    if (!isSub) histories.push(raw);
+
+    // chaining:  a && b   |   a ; b
+    const chain = raw.split(/\s*(?:&&|;)\s*/).filter(Boolean);
+    if (chain.length > 1) {
+      let outs = [], cur = cwd, code = 0;
+      for (const part of chain) {
+        const r = await run(part, cur, true);
+        cur = r.cwd; code = r.code;
+        if (r.out) outs.push(r.out);
+        if (code !== 0) break;
+      }
+      return { out: outs.join('\n'), cwd: cur, code };
+    }
+
+    let redirect = null;
+    const rm = /\s(>>?)\s*(\S+)\s*$/.exec(raw);
+    let line = raw;
+    if (rm) { redirect = { mode: rm[1], path: joinPath(cwd, rm[2]) }; line = raw.slice(0, rm.index).trim(); }
+    const t = tokenize(line);
+    const cmd = (t.shift() || '').toLowerCase();
+    const rest = t.join(' ');
+
+    const done = (out, code) => {
+      out = out == null ? '' : String(out);
+      if (redirect) {
+        if (redirect.mode === '>>') { const r = vfs.read(redirect.path); vfs.write(redirect.path, ((r.content || '') + out + '\n')); }
+        else vfs.write(redirect.path, out + '\n');
+        return { out: '', cwd, code: code || 0 };
+      }
+      return { out, cwd, code: code || 0 };
+    };
+    const APPS = ['browser', 'files', 'editor', 'terminal', 'agent', 'calc', 'settings', 'docs', 'monitor', 'music'];
+
+    switch (cmd) {
+      case 'help': case '?': return done(HELP);
+      case 'pwd': return done(cwd);
+      case 'ls': case 'dir': {
+        const r = vfs.list(joinPath(cwd, t[0] || ''));
+        if (r.error) return done(r.error, 1);
+        return done(r.entries.map(e => (e.type === 'dir' ? 'd ' : '- ') + e.name.padEnd(28) + (e.type === 'dir' ? '<DIR>' : e.size + ' b')).join('\n') || '(empty)');
+      }
+      case 'cd': {
+        const target = joinPath(cwd, t[0] || '/');
+        const r = vfs.list(target);
+        if (r.error) return done(r.error, 1);
+        return { out: '', cwd: r.path, code: 0 };
+      }
+      case 'cat': {
+        if (!t[0]) return done('usage: cat <file>', 1);
+        const r = vfs.read(joinPath(cwd, t[0]));
+        return done(r.error || r.content, r.error ? 1 : 0);
+      }
+      case 'echo': return done(rest.replace(/^["']|["']$/g, ''));
+      case 'write': {
+        if (t.length < 2) return done('usage: write <file> <text>', 1);
+        const r = vfs.write(joinPath(cwd, t[0]), t.slice(1).join(' ') + '\n');
+        return done(r.error || ('written ' + r.bytes + ' bytes -> ' + r.path), r.error ? 1 : 0);
+      }
+      case 'mkdir': {
+        const r = vfs.mkdir(joinPath(cwd, t[0] || ''), true);
+        return done(r.error || '', r.error ? 1 : 0);
+      }
+      case 'touch': { const p = joinPath(cwd, t[0] || ''); if (vfs.read(p).error) vfs.write(p, ''); return done(''); }
+      case 'rm': case 'del': {
+        const rec = t[0] === '-r' || t[0] === '-rf';
+        const r = vfs.rm(joinPath(cwd, t[rec ? 1 : 0] || ''), rec);
+        return done(r.error || ('removed ' + r.path), r.error ? 1 : 0);
+      }
+      case 'cp': case 'mv': {
+        if (t.length < 2) return done('usage: ' + cmd + ' <src> <dst>', 1);
+        const r = vfs.move(joinPath(cwd, t[0]), joinPath(cwd, t[1]), cmd === 'cp');
+        return done(r.error || '', r.error ? 1 : 0);
+      }
+      case 'tree': {
+        const r = vfs.tree(joinPath(cwd, t[0] || ''), 3);
+        return done(r.error || r.entries.map(e => (e.type === 'dir' ? '[D] ' : '    ') + e.path).join('\n') || '(empty)');
+      }
+      case 'find': case 'grep': {
+        const r = vfs.search(t[0] || '', joinPath(cwd, t[1] || ''));
+        return done(r.count ? r.hits.map(h => h.path + ':' + h.line + ': ' + h.snippet).join('\n') : 'no matches');
+      }
+      case 'date': return done(new Date().toString());
+      case 'whoami': return done('agent');
+      case 'uname': return done('WebOS ' + VERSION + ' (single-file, client-side)');
+      case 'clear': return { out: '__CLEAR__', cwd, code: 0 };
+      case 'apps': return done(APPS.join('\n'));
+      case 'sysinfo': {
+        const s = vfs.stats();
+        return done(JSON.stringify({
+          version: VERSION, mode: 'local', files: s.files, dirs: s.dirs, bytes: s.bytes,
+          windows: (window.WebOS ? WebOS.windows.map(w => w.app + ':' + w.title) : []),
+          online: navigator.onLine
+        }, null, 2));
+      }
+      case 'windows': {
+        const ws = window.WebOS ? WebOS.windows : [];
+        return done(ws.length ? ws.map(w => `${w.focused ? '*' : ' '} [${w.id}] ${w.app} - ${w.title}`).join('\n') : 'no windows open');
+      }
+      case 'history': return done(histories.map((h, i) => String(i + 1).padStart(4) + '  ' + h).join('\n'));
+      case 'open': {
+        const app = (t[0] || '').toLowerCase();
+        if (!APPS.includes(app)) return done('unknown app: ' + app + '\napps: ' + APPS.join(', '), 1);
+        const args = t[1] ? { url: t[1], path: t[1], arg: t[1] } : {};
+        const w = window.WebOS && WebOS.open(app, args);
+        return done(w ? 'opened ' + app + ' [' + w.id + ']' : 'open failed', w ? 0 : 1);
+      }
+      case 'browse': {
+        const url = t[0] || 'https://example.com';
+        if (window.WebOS) WebOS.open('browser', { url });
+        return done('browsing ' + url + '  (local mode: page OS iframe me khulti hai)');
+      }
+      case 'theme': {
+        const mode = (t[0] || 'dark').toLowerCase();
+        if (window.WebOS) WebOS.setTheme(mode);
+        return done('theme: ' + mode);
+      }
+      case 'wallpaper': {
+        if (window.WebOS) WebOS.setWallpaper(rest || null);
+        return done('wallpaper updated');
+      }
+      case 'notify': {
+        if (window.WebOS) WebOS.notify(rest || 'hello', 'ok');
+        return done('notified');
+      }
+      case 'agent': {
+        if (!window.WebOS) return done('os not ready', 1);
+        const op = t[0] || 'state';
+        if (op === 'state') return done(JSON.stringify(WebOS.state(), null, 2));
+        let args = {};
+        if (op === 'click') args = { ref: Number(t[1]) };
+        else if (op === 'type') args = { ref: Number(t[1]), text: t.slice(2).join(' ') };
+        else if (op === 'navigate') args = { url: t[1] };
+        const res = await WebOS.handleCommand({ op, args, app: t[t.length - 1] });
+        return done(JSON.stringify(res, null, 2));
+      }
+      case 'read':
+      case 'search':
+        return done('local mode me `' + cmd + '` nahi chalta — ye server (node server.js) ke proxy/search se aata hai.', 1);
+      default:
+        return done('command not found: ' + cmd + '  (try `help`)', 127);
+    }
+  }
+
+  /* ---------------- agent log (in-page) ---------------- */
+  const agentLog = [];
+  let logSeq = 0;
+  function pushLog(kind, text, extra) {
+    const e = Object.assign({ seq: ++logSeq, ts: Date.now(), kind, text: String(text).slice(0, 400) }, extra || {});
+    agentLog.push(e);
+    if (agentLog.length > 400) agentLog.shift();
+    return e;
+  }
+  pushLog('system', 'WebOS local mode started (single-file build)');
+
+  /* ---------------- fetch shim ---------------- */
+  function makeResponse(obj, status) {
+    return {
+      ok: (status || 200) < 400,
+      status: status || 200,
+      json: () => Promise.resolve(obj),
+      text: () => Promise.resolve(typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2)),
+      headers: { get: () => 'application/json' }
+    };
+  }
+
+  async function route(pathname, query, init) {
+    const body = init && init.body ? JSON.parse(init.body) : {};
+    switch (pathname) {
+      /* status */
+      case '/api/ping': return makeResponse({ ok: true, version: VERSION, mode: 'local', clients: 0, ts: Date.now() });
+      case '/api/meta': return makeResponse({
+        name: 'WebOS (local mode)', version: VERSION, mode: 'local',
+        apps: webosApps(), help: HELP,
+        endpoints: { note: 'single-file build — koi server nahi chahiye' }
+      });
+
+      /* filesystem */
+      case '/api/fs/list': return makeResponse(vfs.list(query.get('path') || '/'));
+      case '/api/fs/read': return makeResponse(vfs.read(query.get('path') || ''));
+      case '/api/fs/tree': return makeResponse(vfs.tree(query.get('path') || '/', Number(query.get('depth')) || 3));
+      case '/api/fs/search': return makeResponse(vfs.search(query.get('q') || '', query.get('path') || '/'));
+      case '/api/fs/stats': return makeResponse(vfs.stats());
+      case '/api/fs/write': return makeResponse(body.action === 'append'
+        ? (() => { const r = vfs.read(body.path || ''); return vfs.write(body.path || '', (r.content || '') + (body.content || '')); })()
+        : vfs.write(body.path || '', body.content == null ? '' : body.content));
+      case '/api/fs/mkdir': return makeResponse(vfs.mkdir(body.path || '', true));
+      case '/api/fs/rm': return makeResponse(vfs.rm(body.path || '', body.recursive !== false));
+      case '/api/fs/move': return makeResponse(vfs.move(body.from || '', body.to || '', !!body.copy));
+
+      /* shell */
+      case '/api/exec': return makeResponse(await run(body.cmd || body.command || '', body.cwd || '/Home'));
+
+      /* agent bus (in-page) */
+      case '/api/agent/state': {
+        const st = (window.WebOS ? WebOS.state() : { windows: [] });
+        return makeResponse(Object.assign({ connected: false, local: true, clients: 0, queueDepth: 0, ts: Date.now() }, st));
+      }
+      case '/api/agent/cmd': {
+        const op = body.op || (body.cmd && body.cmd.op);
+        const args = body.args || (body.cmd && body.cmd.args) || {};
+        const app = body.app || (body.cmd && body.cmd.app);
+        if (!op) return makeResponse({ ok: false, error: 'missing op' }, 400);
+        if (!window.WebOS) return makeResponse({ ok: false, error: 'OS booting…' }, 503);
+        pushLog('cmd', op + (app ? ' ' + app : ''), { args });
+        const started = Date.now();
+        try {
+          const result = await WebOS.handleCommand({ op, app, args, id: 'local-' + logSeq });
+          pushLog(result && result.ok === false ? 'error' : 'ok',
+            op + (result && result.error ? ': ' + result.error : ''), { id: 'local-' + logSeq });
+          const out = Object.assign({ ok: true, op, handledBy: result && result.handledBy || 'local', ms: Date.now() - started }, result || {});
+          out.localNote = 'local mode: GUI commands chalte hain, web-proxy ops nahi.';
+          return makeResponse(out);
+        } catch (e) {
+          pushLog('error', op + ': ' + e.message, {});
+          return makeResponse({ ok: false, op, error: e.message }, 500);
+        }
+      }
+      case '/api/agent/log': {
+        const since = Number(query.get('since') || 0);
+        return makeResponse({ log: agentLog.filter(e => e.seq > since), last: agentLog.length ? agentLog[agentLog.length - 1].seq : 0 });
+      }
+      case '/api/agent/inbox': return makeResponse({ commands: [] });
+      case '/api/agent/report': case '/api/agent/result': return makeResponse({ ok: true });
+      case '/api/agent/clients': return makeResponse({ clients: [], primary: null, local: true });
+
+      /* web features need the server */
+      case '/api/search': return makeResponse({ query: query.get('q') || '', engine: null, count: 0, results: [], errors: ['local mode: /api/search needs the Node server'] }, 200);
+      case '/api/proxy': case '/api/proxy/raw': case '/api/proxy/text':
+        return makeResponse({ error: 'local mode: web proxy needs the Node server (node server.js)', url: query.get('url') }, 501);
+
+      default: return makeResponse({ error: 'not available in local mode: ' + pathname }, 404);
+    }
+  }
+
+  let cachedApps = null;
+  function webosApps() {
+    try { return (window.WebOS ? WebOS.state().apps.map(a => a.id) : ['browser', 'files', 'editor', 'terminal', 'agent', 'calc', 'settings', 'docs', 'monitor', 'music']); }
+    catch (e) { return ['browser', 'files', 'editor', 'terminal', 'agent', 'calc', 'settings', 'docs', 'monitor', 'music']; }
+  }
+
+  const origFetch = window.fetch ? window.fetch.bind(window) : null;
+  window.fetch = function (input, init) {
+    const url = typeof input === 'string' ? input : (input && input.url) || '';
+    let u = null;
+    try { u = new URL(url, location.href); } catch (e) {}
+    if (u && u.pathname.indexOf('/api/') === 0) {
+      const q = u.searchParams;
+      responseDelay(() => {});
+      return route(u.pathname, q, init || {});
+    }
+    if (origFetch) return origFetch(input, init);
+    return Promise.reject(new Error('offline (local mode)'));
+  };
+  function responseDelay() { /* keeps signatures tidy */ }
+
+  /* expose for the console + tests */
+  window.WebOSLocal = {
+    version: VERSION,
+    vfs,
+    shell: (cmd, cwd) => run(cmd, cwd),
+    log: () => agentLog.slice(),
+    reset: () => { root = seed(); save(); pushLog('system', 'filesystem reset (local)'); return { ok: true }; }
+  };
+})();
+
+</script>
+<script>
+/* ============================================================
+   WebOS kernel — app registry, window manager, desktop shell
+   ============================================================ */
+(function () {
+  'use strict';
+
+  const APPS = {};            // id -> manifest
+  const ORDER = [];           // desktop order
+  const open_ = [];           // open instances (all apps)
+  let zTop = 10;
+  let winSeq = 0;
+  let focusedId = null;
+  const appStateFeed = {};    // appId -> last published state (for the agent)
+  const settings = { theme: 'dark', accent: '#6b8cff', wallpaper: null };
+  const listeners = {};
+
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+  /* ---------------- tiny helpers ---------------- */
+  function el(tag, cls, html) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (html != null) n.innerHTML = html;
+    return n;
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function nowTime() {
+    const d = new Date();
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+  function store(key, val) {
+    try {
+      if (val === undefined) { const v = localStorage.getItem('webos.' + key); return v ? JSON.parse(v) : null; }
+      localStorage.setItem('webos.' + key, JSON.stringify(val));
+    } catch (e) { return null; }
+  }
+  function on(evt, fn) { (listeners[evt] = listeners[evt] || []).push(fn); }
+  function emit(evt, data) { (listeners[evt] || []).forEach(f => { try { f(data); } catch (e) { console.warn(e); } }); }
+
+  /* ---------------- REST helpers ---------------- */
+  const api = {
+    async get(path, params) {
+      const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+      const r = await fetch(path + qs);
+      return r.json().catch(() => ({ error: 'bad json' }));
+    },
+    async post(path, body) {
+      const r = await fetch(path, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body || {})
+      });
+      return r.json().catch(() => ({ error: 'bad json' }));
+    },
+    fs: {
+      list: (p) => api.get('/api/fs/list', { path: p }),
+      read: (p) => api.get('/api/fs/read', { path: p }),
+      write: (p, c) => api.post('/api/fs/write', { path: p, content: c }),
+      mkdir: (p) => api.post('/api/fs/mkdir', { path: p }),
+      rm: (p, recursive = true) => api.post('/api/fs/rm', { path: p, recursive }),
+      move: (from, to, copy) => api.post('/api/fs/move', { from, to, copy }),
+      tree: (p, depth) => api.get('/api/fs/tree', { path: p, depth }),
+      search: (q, p) => api.get('/api/fs/search', { q, path: p })
+    },
+    shell: (cmd, cwd) => api.post('/api/exec', { cmd, cwd }),
+    search: (q) => api.get('/api/search', { q }),
+    readUrl: (url) => api.get('/api/proxy/text', { url }),
+    proxyUrl: (url) => '/api/proxy?url=' + encodeURIComponent(url)
+  };
+
+  /* ---------------- app registration ---------------- */
+  function registerApp(manifest) {
+    if (!manifest || !manifest.id) return;
+    APPS[manifest.id] = Object.assign({
+      name: manifest.id, icon: '▪', width: 760, height: 520, desktop: true, singleton: false
+    }, manifest);
+    if (manifest.desktop !== false && !ORDER.includes(manifest.id)) ORDER.push(manifest.id);
+  }
+
+  /* ---------------- window manager ---------------- */
+  function desktopRect() {
+    const d = $('#desktop').getBoundingClientRect();
+    return { w: d.width, h: d.height };
+  }
+
+  function createWindow(appId, args) {
+    const manifest = APPS[appId];
+    if (!manifest) return null;
+    if (manifest.singleton) {
+      const existing = open_.find(w => w.app === appId);
+      if (existing) {
+        existing.restore(); existing.focus();
+        if (existing.instance && existing.instance.onArgs) existing.instance.onArgs(args || {});
+        return existing;
+      }
+    }
+    const dr = desktopRect();
+    const width = Math.min(manifest.width, Math.max(360, dr.w - 40));
+    const height = Math.min(manifest.height, Math.max(240, dr.h - 40));
+    const n = open_.length;
+    const left = Math.max(8, Math.round((dr.w - width) / 2) + ((n % 5) - 2) * 26);
+    const top = Math.max(8, Math.round((dr.h - height) / 2) + ((n % 5) - 2) * 22);
+
+    const id = 'w' + (++winSeq);
+    const root = el('div', 'win');
+    root.dataset.id = id;
+    root.dataset.app = appId;
+    root.style.cssText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;z-index:${++zTop}`;
+    root.innerHTML = `
+      <div class="win-titlebar">
+        <span class="win-icon">${manifest.icon}</span>
+        <span class="win-title">${esc(manifest.name)}</span>
+        <div class="win-controls">
+          <button class="win-min" title="Minimize">–</button>
+          <button class="win-max" title="Maximize">□</button>
+          <button class="win-close" title="Close">✕</button>
+        </div>
+      </div>
+      <div class="win-body"></div>
+      <div class="win-resize"></div>`;
+
+    const body = $('.win-body', root);
+    const titleEl = $('.win-title', root);
+
+    const win = {
+      id, app: appId, el: root, body, manifest,
+      title: manifest.name,
+      minimized: false, maximized: false,
+      rect: { left, top, width, height },
+      instance: null,
+      setTitle(t, sub) {
+        win.title = t || manifest.name;
+        titleEl.innerHTML = esc(win.title) + (sub ? ` <span class="sub">${esc(sub)}</span>` : '');
+        syncTaskbar(); report();
+      },
+      setSubtitle(sub) {
+        titleEl.innerHTML = esc(win.title) + (sub ? ` <span class="sub">${esc(sub)}</span>` : '');
+      },
+      focus() { focusWin(win); },
+      close() { closeWin(win); },
+      minimize() {
+        win.minimized = true; root.classList.add('min');
+        if (focusedId === id) { focusedId = null; focusTopMost(); }
+        syncTaskbar(); report();
+      },
+      restore() {
+        win.minimized = false; root.classList.remove('min');
+        focusWin(win); report();
+      },
+      maximize(on) {
+        const want = on === undefined ? !win.maximized : !!on;
+        win.maximized = want;
+        root.classList.toggle('max', want);
+        if (want) {
+          win._prev = { ...win.rect };
+          const dr = desktopRect();
+          Object.assign(win.rect, { left: 0, top: 0, width: dr.w, height: dr.h });
+        } else if (win._prev) {
+          Object.assign(win.rect, win._prev);
+        }
+        applyRect(win);
+        syncTaskbar(); report();
+      },
+      toggleMax() { win.maximize(); },
+      applyRect() { applyRect(win); }
+    };
+
+    function applyRect(w) {
+      w.el.style.left = w.rect.left + 'px';
+      w.el.style.top = w.rect.top + 'px';
+      w.el.style.width = w.rect.width + 'px';
+      w.el.style.height = w.rect.height + 'px';
+    }
+
+    win.applyRect = () => applyRect(win);
+    win.toggleMax = () => win.maximize();
+
+    const appApi = {
+      win, args: args || {}, kernel: WebOS, api, esc, el, on, emit,
+      setTitle: win.setTitle,
+      setSubtitle: win.setSubtitle,
+      notify: WebOS.notify,
+      openApp: (a, ar) => WebOS.open(a, ar),
+      publishState: (obj) => { appStateFeed[appId] = Object.assign({}, appStateFeed[appId], obj, { ts: Date.now() }); report(); },
+      onCommand: null // assigned by app
+    };
+
+    $('#windows').appendChild(root);
+    open_.push(win);
+    wireWindow(win);
+    focusedId = id;
+    setFocusClass();
+    syncTaskbar();
+
+    const inst = manifest.mount(appApi) || {};
+    win.instance = inst;
+    if (inst.handleCommand) appApi.onCommand = inst.handleCommand;
+    emit('window:open', win);
+    report();
+    return win;
+  }
+
+  function applyRect(w) {
+    w.el.style.left = w.rect.left + 'px';
+    w.el.style.top = w.rect.top + 'px';
+    w.el.style.width = w.rect.width + 'px';
+    w.el.style.height = w.rect.height + 'px';
+  }
+
+  function focusWin(w) {
+    if (!w) return;
+    if (w.minimized) { w.minimized = false; w.el.classList.remove('min'); }
+    focusedId = w.id;
+    w.el.style.zIndex = ++zTop;
+    setFocusClass(); syncTaskbar(); report();
+  }
+  function focusTopMost() {
+    const vis = open_.filter(w => !w.minimized);
+    if (!vis.length) { focusedId = null; setFocusClass(); return; }
+    const top = vis.reduce((a, b) => (Number(a.el.style.zIndex) > Number(b.el.style.zIndex) ? a : b));
+    focusedId = top.id; setFocusClass();
+  }
+  function setFocusClass() {
+    open_.forEach(w => w.el.classList.toggle('focus', w.id === focusedId));
+  }
+
+  function closeWin(w) {
+    if (!w) return;
+    try { if (w.instance && w.instance.destroy) w.instance.destroy(); } catch (e) {}
+    const i = open_.indexOf(w);
+    if (i >= 0) open_.splice(i, 1);
+    w.el.remove();
+    if (focusedId === w.id) { focusedId = null; focusTopMost(); }
+    syncTaskbar(); report(); emit('window:close', w);
+  }
+
+  function wireWindow(win) {
+    const root = win.el;
+    const bar = $('.win-titlebar', root);
+
+    root.addEventListener('pointerdown', () => focusWin(win), true);
+
+    $('.win-min', root).onclick = (e) => { e.stopPropagation(); win.minimize(); };
+    $('.win-close', root).onclick = (e) => { e.stopPropagation(); win.close(); };
+    $('.win-max', root).onclick = (e) => { e.stopPropagation(); win.maximize(); };
+    bar.addEventListener('dblclick', (e) => { if (!e.target.closest('.win-controls')) win.maximize(); });
+
+    // drag
+    let drag = null;
+    bar.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.win-controls')) return;
+      if (win.maximized) return;
+      drag = { x: e.clientX, y: e.clientY, left: win.rect.left, top: win.rect.top };
+      bar.setPointerCapture(e.pointerId);
+      win.el.style.transition = 'none';
+    });
+    bar.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      win.rect.left = Math.max(-win.rect.width + 90, drag.left + e.clientX - drag.x);
+      win.rect.top = Math.max(0, drag.top + e.clientY - drag.y);
+      applyRect(win);
+    });
+    bar.addEventListener('pointerup', (e) => {
+      if (drag) { drag = null; report(); }
+      try { bar.releasePointerCapture(e.pointerId); } catch (err) {}
+    });
+
+    // resize
+    const rz = $('.win-resize', root);
+    let rs = null;
+    rz.addEventListener('pointerdown', (e) => {
+      if (win.maximized) return;
+      e.stopPropagation();
+      rs = { x: e.clientX, y: e.clientY, w: win.rect.width, h: win.rect.height };
+      rz.setPointerCapture(e.pointerId);
+    });
+    rz.addEventListener('pointermove', (e) => {
+      if (!rs) return;
+      win.rect.width = Math.max(340, rs.w + e.clientX - rs.x);
+      win.rect.height = Math.max(190, rs.h + e.clientY - rs.y);
+      applyRect(win);
+    });
+    rz.addEventListener('pointerup', (e) => {
+      rs = null;
+      try { rz.releasePointerCapture(e.pointerId); } catch (err) {}
+      report();
+    });
+  }
+
+  /* ---------------- taskbar / start menu / icons ---------------- */
+  function syncTaskbar() {
+    const list = $('#tasklist');
+    if (!list) return;
+    list.innerHTML = '';
+    open_.forEach(w => {
+      const b = el('button', 'task' + (w.id === focusedId && !w.minimized ? ' active' : ''));
+      b.dataset.id = w.id;
+      b.dataset.app = w.app;
+      b.innerHTML = `<span>${w.manifest.icon}</span><span class="t">${esc(w.title)}</span>`;
+      b.onclick = () => {
+        if (w.minimized) w.restore();
+        else if (focusedId === w.id) w.minimize();
+        else w.focus();
+      };
+      list.appendChild(b);
+    });
+  }
+
+  function buildDesktop() {
+    const box = $('#icons');
+    box.innerHTML = '';
+    ORDER.forEach(id => {
+      const m = APPS[id];
+      const d = el('div', 'dicon');
+      d.dataset.app = id;
+      d.innerHTML = `<span class="ic">${m.icon}</span><span class="nm">${esc(m.name)}</span>`;
+      d.ondblclick = () => WebOS.open(id);
+      d.onclick = () => { $$('.dicon').forEach(x => x.classList.remove('sel')); d.classList.add('sel'); };
+      box.appendChild(d);
+    });
+
+    const sm = $('#sm-apps');
+    sm.innerHTML = '';
+    ORDER.forEach(id => {
+      const m = APPS[id];
+      const a = el('div', 'sm-app');
+      a.dataset.app = id;
+      a.innerHTML = `<span class="ic">${m.icon}</span><span>${esc(m.name)}</span>`;
+      a.onclick = () => { WebOS.open(id); toggleStart(false); };
+      sm.appendChild(a);
+    });
+  }
+
+  function toggleStart(force) {
+    const m = $('#startmenu');
+    const show = force === undefined ? m.classList.contains('hidden') : force;
+    m.classList.toggle('hidden', !show);
+  }
+
+  /* ---------------- toasts ---------------- */
+  let toastSeq = 0;
+  function notify(text, kind, title) {
+    const t = el('div', 'toast ' + (kind || ''));
+    t.dataset.id = 't' + (++toastSeq);
+    t.innerHTML = (title ? `<b>${esc(title)}</b>` : '<b>notification</b>') + esc(text);
+    $('#toasts').appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(30px)'; setTimeout(() => t.remove(), 300); }, 5200);
+    pushNotification(text, kind, title);
+    return t;
+  }
+  const notifications = [];
+  function pushNotification(text, kind, title) {
+    notifications.push({ text: String(text), kind: kind || 'info', title: title || '', ts: Date.now() });
+    if (notifications.length > 40) notifications.shift();
+    report();
+  }
+
+  /* ---------------- modal prompt / confirm (sandbox-safe) ---------------- */
+  function modal(html, { input = false, value = '', placeholder = '' } = {}) {
+    return new Promise((resolve) => {
+      const back = el('div', '');
+      back.style.cssText = 'position:absolute;inset:0;background:rgba(4,6,12,.55);backdrop-filter:blur(3px);z-index:900;display:flex;align-items:center;justify-content:center';
+      const box = el('div', '');
+      box.style.cssText = 'width:min(420px,86vw);background:var(--surface-2);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px';
+      box.innerHTML = `<div style="font-size:13px;margin-bottom:12px">${esc(html)}</div>`;
+      let inp = null;
+      if (input) {
+        inp = el('input', 'inp');
+        inp.value = value; inp.placeholder = placeholder || '';
+        inp.style.cssText = 'width:100%;margin-bottom:14px';
+        box.appendChild(inp);
+      }
+      const row = el('div', '');
+      row.style.cssText = 'display:flex;gap:8px;justify-content:flex-end';
+      const no = el('button', 'tb-btn', input ? 'Cancel' : 'No');
+      const yes = el('button', 'tb-btn primary', input ? 'OK' : 'Yes');
+      row.appendChild(no); row.appendChild(yes);
+      box.appendChild(row);
+      back.appendChild(box);
+      $('#desktop').appendChild(back);
+      const done = (v) => { back.remove(); document.removeEventListener('keydown', key); resolve(v); };
+      const key = (e) => {
+        if (e.key === 'Escape') done(null);
+        if (e.key === 'Enter') done(input ? inp.value : true);
+      };
+      document.addEventListener('keydown', key);
+      no.onclick = () => done(null);
+      yes.onclick = () => done(input ? inp.value : true);
+      back.onclick = (e) => { if (e.target === back) done(null); };
+      setTimeout(() => { (inp || yes).focus(); if (inp) inp.select(); }, 40);
+    });
+  }
+  /* ---------------- theme / wallpaper ---------------- */
+  const WALLS = {
+    'aurora': null,
+    'deep space': 'radial-gradient(1000px 700px at 20% 15%, #10204f 0%, transparent 60%), linear-gradient(160deg,#05060a,#0d1120 60%,#05060a)',
+    'violet': 'radial-gradient(900px 700px at 80% 20%, #5b2a8a 0%, transparent 55%), linear-gradient(200deg,#100818,#1b1030)',
+    'sunset': 'linear-gradient(160deg,#2b1055,#7597de 60%,#ffb56b)',
+    'forest': 'radial-gradient(1100px 700px at 25% 20%, #0f3d2e 0%, transparent 60%), linear-gradient(160deg,#05100c,#0d2420)',
+    'paper': 'linear-gradient(160deg,#f7f9ff,#e6ebf7)'
+  };
+  function setWallpaper(css) {
+    const wp = $('#wallpaper');
+    document.documentElement.style.setProperty('--wall', css || '');
+    wp.style.background = css || '';
+    settings.wallpaper = css;
+    store('wallpaper', css);
+    report();
+  }
+  function setTheme(mode) {
+    settings.theme = mode === 'light' ? 'light' : 'dark';
+    document.body.className = 'theme-' + settings.theme;
+    store('theme', settings.theme);
+    report();
+  }
+  function setAccent(hex) {
+    settings.accent = hex;
+    document.documentElement.style.setProperty('--accent', hex);
+    store('accent', hex);
+    report();
+  }
+
+  /* ---------------- state reporting (for the agent) ---------------- */
+  let reportTimer = null;
+  function report() {
+    if (reportTimer) return;
+    reportTimer = setTimeout(() => {
+      reportTimer = null;
+      emit('state', WebOS.state());
+    }, 120);
+  }
+
+  function winState(w) {
+    return {
+      id: w.id, app: w.app, title: w.title, focused: w.id === focusedId,
+      minimized: !!w.minimized, maximized: !!w.maximized,
+      rect: { left: Math.round(w.rect.left), top: Math.round(w.rect.top), width: Math.round(w.rect.width), height: Math.round(w.rect.height) }
+    };
+  }
+
+  /* ---------------- command routing (used by bridge.js) ---------------- */
+  function findWindow(target) {
+    if (!target) return open_.find(w => w.id === focusedId && !w.minimized) || open_.filter(w => !w.minimized).slice(-1)[0];
+    if (typeof target === 'string' && target.startsWith('w')) {
+      const byId = open_.find(w => w.id === target);
+      if (byId) return byId;
+    }
+    const appId = (target.app || target.appId || target.id || target);
+    const matches = open_.filter(w => w.app === appId);
+    return matches.length ? matches[matches.length - 1] : null;
+  }
+
+  async function handleCommand(cmd) {
+    const op = String(cmd.op || '').toLowerCase();
+    const args = cmd.args || {};
+    const own = (extra) => Object.assign({ id: cmd.id, op, handledBy: 'kernel' }, extra || {});
+
+    switch (op) {
+      case 'open': {
+        const appId = (cmd.app || args.app || args.id || '').toLowerCase();
+        if (!APPS[appId]) return own({ ok: false, error: 'unknown app: ' + appId, available: ORDER });
+        const w = WebOS.open(appId, args);
+        return own({ ok: !!w, windowId: w && w.id, app: appId, title: w && w.title });
+      }
+      case 'close': {
+        const w = findWindow(args.window || args.target || cmd.window || args.app);
+        if (!w) return own({ ok: false, error: 'window not found' });
+        w.close();
+        return own({ ok: true, closed: w.id });
+      }
+      case 'closeall': {
+        const n = open_.length;
+        [...open_].forEach(w => w.close());
+        return own({ ok: true, closed: n });
+      }
+      case 'focus': {
+        const w = findWindow(args.window || args.target || args.app);
+        if (!w) return own({ ok: false, error: 'window not found' });
+        w.focus();
+        return own({ ok: true, windowId: w.id, app: w.app });
+      }
+      case 'minimize': {
+        const w = findWindow(args.window || args.app);
+        if (!w) return own({ ok: false, error: 'window not found' });
+        w.minimize();
+        return own({ ok: true, windowId: w.id });
+      }
+      case 'maximize': case 'restore': {
+        const w = findWindow(args.window || args.app);
+        if (!w) return own({ ok: false, error: 'window not found' });
+        if (op === 'maximize') w.maximize(args.on === undefined ? true : args.on);
+        else { w.minimized = false; w.el.classList.remove('min'); w.maximize(false); w.focus(); }
+        return own({ ok: true, windowId: w.id, maximized: w.maximized });
+      }
+      case 'move': {
+        const w = findWindow(args.window || args.app);
+        if (!w) return own({ ok: false, error: 'window not found' });
+        ['left', 'top', 'width', 'height'].forEach(k => { if (typeof args[k] === 'number') w.rect[k] = args[k]; });
+        w.applyRect();
+        report();
+        return own({ ok: true, windowId: w.id, rect: w.rect });
+      }
+      case 'windows': case 'list':
+        return own({ ok: true, windows: open_.map(winState) });
+      case 'notify':
+        notify(args.text || args.message || 'notification', args.kind || 'ok', args.title);
+        return own({ ok: true, text: args.text || '' });
+      case 'wallpaper':
+        setWallpaper(args.css || args.wallpaper || args.value);
+        return own({ ok: true, wallpaper: settings.wallpaper });
+      case 'theme':
+        if (args.accent) setAccent(args.accent);
+        if (args.mode || args.theme) setTheme(args.mode || args.theme);
+        return own({ ok: true, theme: settings.theme, accent: settings.accent });
+      case 'titlebar': {
+        const w = findWindow(args.window || args.app);
+        if (!w) return own({ ok: false, error: 'window not found' });
+        w.setTitle(args.title || w.title);
+        return own({ ok: true });
+      }
+      case 'apps':
+        return own({ ok: true, apps: ORDER.map(id => ({ id, name: APPS[id].name, icon: APPS[id].icon })) });
+    }
+
+    // app-specific ops (navigate / back / click / type / read / ...)
+    const preferredApp = cmd.app || args.app;
+    let target = null;
+    if (preferredApp) target = open_.filter(w => w.app === preferredApp).slice(-1)[0];
+    if (!target) target = open_.find(w => w.id === focusedId);
+    if (!target) target = open_.slice(-1)[0];
+
+    if (target && target.instance && target.instance.handleCommand) {
+      try {
+        const res = await target.instance.handleCommand(cmd, target);
+        if (res) return Object.assign({ id: cmd.id, op, handledBy: target.app, windowId: target.id }, res);
+      } catch (e) {
+        return own({ ok: false, error: 'app error: ' + e.message });
+      }
+    }
+
+    // generic DOM ops fallback (click/type/query inside the OS itself)
+    if (['click', 'type', 'query', 'key'].includes(op)) {
+      return own(domCommand(op, args));
+    }
+
+    return own({ ok: false, error: 'unknown op: ' + op, openWindows: open_.map(w => w.app) });
+  }
+
+  function domCommand(op, args) {
+    const sel = args.selector || args.sel;
+    try {
+      if (op === 'click') {
+        const node = sel ? document.querySelector(sel) : null;
+        if (!node) return { ok: false, error: 'selector not found: ' + sel };
+        node.click();
+        return { ok: true, clicked: sel };
+      }
+      if (op === 'type') {
+        const node = sel ? document.querySelector(sel) : null;
+        if (!node) return { ok: false, error: 'selector not found: ' + sel };
+        node.focus();
+        if ('value' in node) {
+          node.value = String(args.text || '');
+          node.dispatchEvent(new Event('input', { bubbles: true }));
+          node.dispatchEvent(new Event('change', { bubbles: true }));
+          if (args.submit) {
+            const ev = new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true });
+            node.dispatchEvent(ev);
+            if (node.form && node.form.requestSubmit) { try { node.form.requestSubmit(); } catch (e) {} }
+          }
+        }
+        return { ok: true, typed: sel };
+      }
+      if (op === 'query') {
+        const nodes = sel ? Array.from(document.querySelectorAll(sel)) : [];
+        return {
+          ok: true, count: nodes.length,
+          items: nodes.slice(0, 60).map(n => ({
+            tag: n.tagName.toLowerCase(), text: (n.innerText || n.value || '').slice(0, 200).trim(),
+            rect: (() => { const r = n.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)]; })()
+          }))
+        };
+      }
+      if (op === 'key') {
+        const target = document.activeElement || document.body;
+        const k = args.key || 'Enter';
+        target.dispatchEvent(new KeyboardEvent('keydown', { key: k, keyCode: args.keyCode || 13, bubbles: true }));
+        target.dispatchEvent(new KeyboardEvent('keyup', { key: k, bubbles: true }));
+        return { ok: true, key: k };
+      }
+    } catch (e) { return { ok: false, error: e.message }; }
+    return { ok: false, error: 'unsupported dom op' };
+  }
+
+  /* ---------------- boot ---------------- */
+  function boot() {
+    const sTheme = store('theme'); if (sTheme) settings.theme = sTheme;
+    const sWall = store('wallpaper'); if (sWall) settings.wallpaper = sWall;
+    const sAccent = store('accent'); if (sAccent) settings.accent = sAccent;
+    setTheme(settings.theme);
+    setAccent(settings.accent);
+    if (settings.wallpaper && !Object.prototype.hasOwnProperty.call(WALLS, settings.wallpaper)) setWallpaper(settings.wallpaper);
+
+    buildDesktop();
+    $('#startBtn').onclick = () => toggleStart();
+    $('#themeBtn').onclick = () => setTheme(settings.theme === 'dark' ? 'light' : 'dark');
+    $('#smLock').onclick = () => location.reload();
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#startmenu') && !e.target.closest('#startBtn')) toggleStart(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.code === 'Space') { e.preventDefault(); toggleStart(); }
+      if (e.ctrlKey && e.key.toLowerCase() === 'w' && focusedId) { e.preventDefault(); const w = open_.find(x => x.id === focusedId); if (w) w.close(); }
+    });
+    setInterval(() => { $('#clock').textContent = nowTime(); }, 1000);
+    $('#clock').textContent = nowTime();
+    window.addEventListener('resize', () => {
+      const dr = desktopRect();
+      open_.forEach(w => {
+        if (w.maximized) { w.rect.width = dr.w; w.rect.height = dr.h; applyRect(w); }
+        else {
+          w.rect.left = Math.min(w.rect.left, Math.max(0, dr.w - 120));
+          w.rect.top = Math.min(w.rect.top, Math.max(0, dr.h - 60));
+          w.rect.width = Math.min(w.rect.width, dr.w);
+          w.rect.height = Math.min(w.rect.height, dr.h);
+          applyRect(w);
+        }
+      });
+    });
+
+    // welcome layout: browser + agent console side by side
+    setTimeout(() => {
+      const dr = desktopRect();
+      const browser = WebOS.open('browser', { url: 'https://example.com' });
+      if (browser) {
+        browser.rect = { left: 12, top: 10, width: Math.round(dr.w * 0.66), height: Math.round(dr.h - 24) };
+        browser.applyRect(); browser.focus();
+      }
+      const agent = WebOS.open('agent');
+      if (agent) {
+        agent.rect = { left: Math.round(dr.w * 0.66) + 22, top: 10, width: Math.round(dr.w * 0.32) - 24, height: Math.round((dr.h - 24) * 0.52) };
+        agent.applyRect();
+      }
+    }, 260);
+
+    if (window.WEBOS_LOCAL) {
+      WebOS.notify('Local mode — sab kuch browser ke andar. Console me WebOS.handleCommand({op:"open",app:"files"}) try karo.', 'ok', 'WebOS 1.0 (single file)');
+    } else {
+      WebOS.notify('Agent bus ready. /api/agent/cmd se OS control karo.', 'ok', 'WebOS 1.0');
+    }
+    emit('boot');
+  }
+
+  /* ---------------- public kernel object ---------------- */
+  const WebOS = {
+    version: '1.0.0',
+    boot, registerApp, open: createWindow, notify, api, on, emit,
+    settings, WALLS,
+    setTheme, setWallpaper, setAccent,
+    handleCommand,
+    toggleStart,
+    get windows() { return open_.map(winState); },
+    get instances() { return open_; },
+    focused() { return open_.find(w => w.id === focusedId) || null; },
+    findWindow,
+    report,
+    state() {
+      const feed = {};
+      open_.forEach(w => {
+        if (w.instance && typeof w.instance.state === 'function') {
+          try { feed[w.app] = w.instance.state(); } catch (e) { feed[w.app] = { error: e.message }; }
+        }
+      });
+      return {
+        os: 'WebOS', version: '1.0.0',
+        theme: settings.theme, accent: settings.accent,
+        wallpaper: settings.wallpaper,
+        focused: focusedId,
+        windows: open_.map(winState),
+        apps: ORDER.map(id => ({ id, name: APPS[id].name, icon: APPS[id].icon })),
+        desktopIcons: ORDER.map(id => ({ app: id, name: APPS[id].name, selector: `.dicon[data-app="${id}"]` })),
+        notifications: notifications.slice(-10),
+        appState: feed,
+        ts: Date.now()
+      };
+    }
+  };
+
+  WebOS.prompt = (text, value, placeholder) => modal(text, { input: true, value: value || '', placeholder });
+  WebOS.confirm = (text) => modal(text, { input: false }).then(v => !!v);
+  WebOS.modal = modal;
+
+  window.WebOS = WebOS;
+})();
+
+</script>
+<script>
+
+/* local bridge: no server to talk to, so the agent pill shows "local"
+   and WebOS.bridge stays API-compatible with the server build. */
+(function(){
+  if (!window.WEBOS_LOCAL) return;
+  function setPill(){
+    var p = document.getElementById('agentPill');
+    var t = document.getElementById('agentPillText');
+    if (p) p.classList.add('on');
+    if (t) t.textContent = 'local';
+    if (p) p.title = 'Local mode — single-file build. Server deploy karne par live agent API milti hai.';
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(setPill, 900); });
+  window.WebOS.bridge = {
+    clientId: 'local',
+    connected: function(){ return false; },
+    history: function(){ return (window.WebOSLocal && WebOSLocal.log() || []).filter(function(e){ return e.kind === 'cmd' || e.kind === 'ok' || e.kind === 'error'; }).slice(-30).map(function(e){ return { op: e.text, ok: e.kind !== 'error', ms: 0, ts: e.ts }; }); },
+    reconnect: function(){}
+  };
+  window.WebOS.isLocal = true;
+  /* console se agent ki tarah OS chalane ke liye chhota helper */
+  window.agent = function(op, args, app){
+    return WebOS.handleCommand({ op: op, args: args || {}, app: app });
+  };
+})();
+
+</script>
+<script>
+/* ============================================================
+   WebOS Browser — real web browsing inside the OS + agent control
+   Agent ops: navigate, back, forward, reload, read, click, type,
+              scroll, eval, tabs, panel
+   ============================================================ */
+(function () {
+  'use strict';
+
+  const SEARCH_ENGINE = 'https://duckduckgo.com/?q=';
+  const SANDBOX = 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-top-navigation-by-user-activation';
+
+  /* ---------- small helpers ---------- */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function mk(tag, cls, html) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (html != null) n.innerHTML = html;
+    return n;
+  }
+  function looksLikeUrl(s) {
+    s = String(s || '').trim();
+    if (!s) return false;
+    if (/^(https?:\/\/|webos:\/\/)/i.test(s)) return true;
+    if (/^localhost(:\d+)?(\/|$)/i.test(s)) return true;
+    if (/^[\w-]+(\.[\w-]+)+(\/|:|$)/.test(s) && !/\s/.test(s)) return true;
+    return false;
+  }
+  function normalizeUrl(s) {
+    s = String(s || '').trim();
+    if (!s) return 'webos://start';
+    if (/^(https?:\/\/|webos:\/\/)/i.test(s)) return s;
+    if (/^localhost(:\d+)?(\/|$)/i.test(s)) return 'http://' + s;
+    if (looksLikeUrl(s)) return 'https://' + s;
+    return SEARCH_ENGINE + encodeURIComponent(s);
+  }
+  function realUrl(u) {
+    try {
+      const parsed = new URL(u, location.href);
+      if (parsed.pathname === '/api/proxy' && parsed.searchParams.get('url')) return parsed.searchParams.get('url');
+      return u;
+    } catch (e) { return u; }
+  }
+  function hostOf(u) {
+    try { return new URL(u).host.replace(/^www\./, ''); } catch (e) { return String(u || '').slice(0, 40); }
+  }
+  function localMode() { return !!window.WEBOS_LOCAL; }
+  function proxyUrl(u) {
+    // local (single-file) build: load the page straight from the internet
+    if (localMode()) return u;
+    return '/api/proxy?url=' + encodeURIComponent(u);
+  }
+
+  /* ---------- mini bridge injected into our own srcdoc pages ---------- */
+  function miniBridge() {
+    return `<script data-webos-bridge>(function(){
+  if (window.__webosBridge) return; window.__webosBridge = true;
+  function send(m){ try { parent.postMessage(Object.assign({__webos:true}, m), '*'); } catch(e){} }
+  function abs(u){ try { return new URL(u, document.baseURI).href; } catch(e){ return u; } }
+  function txt(e){ return (e.innerText||e.textContent||'').replace(/\\s+/g,' ').trim(); }
+  function vis(e){ if(!e) return false; var s=getComputedStyle(e); if(s.display==='none'||s.visibility==='hidden') return false; var r=e.getBoundingClientRect(); return !(r.width<1&&r.height<1); }
+  var refMap = new WeakMap(), nextRef = 1;
+  function refOf(e){ var r = refMap.get(e); if(!r){ r = nextRef++; refMap.set(e,r); } try{ e.setAttribute('data-webos-ref', String(r)); }catch(err){} return r; }
+  function elements(){
+    var out=[];
+    function add(e,kind){ var r=e.getBoundingClientRect();
+      out.push({ref:refOf(e),kind:kind,tag:e.tagName.toLowerCase(),text:(kind==='input'?(e.value||e.placeholder||''):txt(e)).slice(0,180),href:e.href||undefined,rect:[Math.round(r.left),Math.round(r.top),Math.round(r.width),Math.round(r.height)]});
+    }
+    document.querySelectorAll('a[href]').forEach(function(a){ if(vis(a)&&txt(a)) add(a,'link'); });
+    document.querySelectorAll('button,[role=button],input[type=submit],input[type=button]').forEach(function(b){ if(vis(b)) add(b,'button'); });
+    document.querySelectorAll('input:not([type=submit]):not([type=button]),textarea,select').forEach(function(i){ if(vis(i)) add(i,'input'); });
+    return out.slice(0,400);
+  }
+  function snapshot(){
+    send({type:'page', url: (location.href==='about:srcdoc'? 'webos://start' : location.href), title: document.title||'',
+      text: (document.body? (document.body.innerText||document.body.textContent||'') : '').replace(/\\n{3,}/g,'\\n\\n').trim().slice(0,60000),
+      elements: elements(), ts: Date.now()});
+  }
+  function clickRef(ref){ var e=document.querySelector('[data-webos-ref="'+ref+'"]'); if(!e) return false; e.scrollIntoView({block:'center'}); e.click(); return true; }
+  function typeRef(ref,v,submit){ var e=document.querySelector('[data-webos-ref="'+ref+'"]'); if(!e) return false;
+    e.scrollIntoView({block:'center'}); try{e.focus();}catch(err){}
+    if(e.tagName==='SELECT'){ e.value=v; } else { e.value=String(v); e.dispatchEvent(new Event('input',{bubbles:true})); e.dispatchEvent(new Event('change',{bubbles:true})); }
+    if(submit){ var f=e.form||(e.closest&&e.closest('form')); if(f){ try{ f.requestSubmit?f.requestSubmit():f.submit(); }catch(err){ try{f.submit();}catch(e2){} } }
+      else { e.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',keyCode:13,which:13,bubbles:true})); } }
+    return true; }
+  document.addEventListener('click', function(ev){
+    var a = ev.target && ev.target.closest ? ev.target.closest('a[href]') : null; if(!a) return;
+    var href = a.getAttribute('href')||''; if(!href || href.charAt(0)==='#') return;
+    ev.preventDefault(); ev.stopPropagation(); send({type:'navigate', url: abs(href), newTab: a.target==='_blank'});
+  }, true);
+  window.addEventListener('message', function(ev){
+    var d=ev.data||{};
+    if(d.__webosSetBase) { try{ document.baseURI; }catch(e){} }
+  });
+  document.addEventListener('submit', function(ev){
+    var f=ev.target; if(!f||f.tagName!=='FORM') return; ev.preventDefault();
+    var method=(f.method||'GET').toUpperCase(); var data=new URLSearchParams(new FormData(f)).toString();
+    var orig=f.getAttribute('data-webos-action');
+    var action = orig ? abs(orig) : (f.getAttribute('action') ? abs(f.getAttribute('action')) : abs(f.getAttribute('data-webos-real')||parent.location.href));
+    if(method==='GET') action += (action.indexOf('?')>=0?'&':'?')+data;
+    send({type:'form', url:action, method:method, data:data});
+  }, true);
+  window.open = function(u){ send({type:'navigate', url: abs(u||''), newTab:true}); return null; };
+  window.addEventListener('message', function(ev){
+    var d=ev.data||{}; if(!d.__webosCmd) return; var res={ok:false};
+    try{
+      if(d.op==='snapshot'){ snapshot(); return; }
+      if(d.op==='click') res.ok=clickRef(d.ref);
+      else if(d.op==='type') res.ok=typeRef(d.ref, d.text, d.submit);
+      else if(d.op==='scroll'){ window.scrollBy(0,d.y||600); res.ok=true; }
+      else if(d.op==='scrollTo'){ window.scrollTo(0,d.y||0); res.ok=true; }
+      else if(d.op==='select'){ var e=document.querySelector('[data-webos-ref="'+d.ref+'"]'); if(e){e.scrollIntoView({block:'center'}); e.style.outline='3px solid #ff9d00'; setTimeout(function(){e.style.outline='';},1200); res.ok=true;} }
+      else if(d.op==='eval'){ res.value=String(eval(d.code)); res.ok=true; }
+    }catch(e){ res.error=String(e&&e.message||e); }
+    if(d.replyId) send({type:'cmdResult', replyId:d.replyId, result:res});
+  });
+  setTimeout(snapshot, 60);
+  window.addEventListener('load', function(){ setTimeout(snapshot, 180); });
+  setInterval(snapshot, 3000);
+})();<\/script>`;
+  }
+
+  function startPage() {
+    const links = [
+      ['example.com', 'https://example.com', '🌐'],
+      ['wikipedia.org', 'https://en.wikipedia.org/wiki/Operating_system', '📚'],
+      ['news.ycombinator', 'https://news.ycombinator.com', '📰'],
+      ['duckduckgo', 'https://duckduckgo.com', '🦆'],
+      ['github.com', 'https://github.com', '🐙'],
+      ['developer.mozilla', 'https://developer.mozilla.org', '🦊']
+    ];
+    return `<!doctype html><html><head><meta charset="utf-8"><title>New Tab — WebOS</title>
+<style>
+ body{margin:0;font-family:ui-sans-serif,system-ui,sans-serif;background:radial-gradient(900px 600px at 20% 10%,#1b2a5e,#0b0e16 60%);color:#e9edf7;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px}
+ .logo{font-size:44px;color:#7c9cff;text-shadow:0 0 30px rgba(124,156,255,.7)}
+ h1{font-size:22px;margin:0;letter-spacing:.04em}
+ p.mut{color:#8d96b5;font-size:12.5px;margin:0}
+ form{display:flex;gap:8px;width:min(560px,86vw)}
+ input{flex:1;height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:#fff;padding:0 14px;font-size:14px;outline:none}
+ input:focus{border-color:#6b8cff;box-shadow:0 0 0 4px rgba(107,140,255,.18)}
+ button{height:42px;padding:0 18px;border-radius:12px;border:0;background:linear-gradient(135deg,#6b8cff,#a678ff);color:#fff;font-weight:600;cursor:pointer}
+ .grid{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:10px;width:min(620px,88vw)}
+ a.card{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.045);text-decoration:none;color:#e9edf7;font-size:12.5px}
+ a.card:hover{background:rgba(107,140,255,.2);border-color:rgba(107,140,255,.4)}
+ .hint{font-size:11px;color:#697089}
+</style></head><body>
+<div class="logo">◈</div>
+<h1>WebOS Browser</h1>
+<p class="mut">Kuch bhi search karo, ya website kholo — sab kuch OS ke andar chalega</p>
+<form id="f"><input id="q" placeholder="search karo ya URL paste karo…" autocomplete="off"><button>Go</button></form>
+<div class="grid">
+ ${links.map(([n, u, i]) => `<a class="card" href="${u}"><span style="font-size:18px">${i}</span>${esc(n)}</a>`).join('')}
+</div>
+<p class="hint">Agent isi page ko bhi padh aur click kar sakta hai — refs Elements panel me dikhte hain</p>
+<script>
+ document.getElementById('f').addEventListener('submit', function(e){
+   e.preventDefault();
+   var v = document.getElementById('q').value;
+   var url = /^(https?:\\/\\/|webos:\\/\\/)/.test(v) || /^[\\w-]+(\\.[\\w-]+)+/.test(v) ? v : 'webos://search?q=' + encodeURIComponent(v);
+   parent.postMessage({__webos:true, type:'navigate', url:url}, '*');
+ });
+<\/script>
+${miniBridge()}
+</body></html>`;
+  }
+
+  function searchPage(query, results, engine) {
+    const rows = (results || []).map(r => `
+      <a class="r" href="${esc(r.url)}">
+        <span class="t">${esc(r.title)}</span>
+        <span class="u">${esc(r.url)}</span>
+        ${r.snippet ? `<span class="s">${esc(r.snippet)}</span>` : ''}
+      </a>`).join('');
+    return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(query)} — WebOS Search</title>
+<style>
+ body{margin:0;font-family:ui-sans-serif,system-ui,sans-serif;background:#0e1119;color:#e9edf7}
+ header{position:sticky;top:0;background:rgba(14,17,25,.95);border-bottom:1px solid rgba(255,255,255,.08);padding:12px 16px;display:flex;gap:10px;align-items:center}
+ input{flex:1;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;padding:0 12px;outline:none}
+ button{height:36px;padding:0 14px;border-radius:10px;border:0;background:#6b8cff;color:#fff;font-weight:600;cursor:pointer}
+ main{padding:14px 16px;max-width:820px}
+ .meta{color:#8d96b5;font-size:11.5px;margin-bottom:12px}
+ .r{display:block;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.08);margin-bottom:9px;text-decoration:none;color:#dfe6f7;background:rgba(255,255,255,.03)}
+ .r:hover{background:rgba(107,140,255,.16);border-color:rgba(107,140,255,.4)}
+ .r .t{display:block;font-size:14.5px;color:#9dbcff;margin-bottom:3px}
+ .r .u{display:block;font-size:11px;color:#6f7896;word-break:break-all;margin-bottom:5px}
+ .r .s{display:block;font-size:12.5px;color:#c3cbdf}
+</style></head><body>
+<header>
+  <b style="font-size:13px;color:#7c9cff">◈</b>
+  <input id="q" value="${esc(query)}">
+  <button id="go">Search</button>
+</header>
+<main>
+  <div class="meta">${results ? results.length : 0} results for “${esc(query)}”${engine ? ' · engine: ' + esc(engine) : ''}</div>
+  ${rows || '<div class="meta">Koi result nahi mila. Dusra query try karo.</div>'}
+</main>
+<script>
+ function go(){ var v=document.getElementById('q').value.trim(); if(!v) return; parent.postMessage({__webos:true,type:'navigate',url:'webos://search?q='+encodeURIComponent(v)},'*'); }
+ document.getElementById('go').onclick = go;
+ document.getElementById('q').addEventListener('keydown', function(e){ if(e.key==='Enter') go(); });
+<\/script>
+${miniBridge()}
+</body></html>`;
+  }
+
+  /* ================= app ================= */
+  WebOS.registerApp({
+    id: 'browser',
+    name: 'Browser',
+    icon: '🌐',
+    width: 1120,
+    height: 720,
+
+    mount(a) {
+      const root = a.win.body;
+      let tabs = [];
+      let tabSeq = 0;
+      let activeId = null;
+      let panelMode = null; // 'elements' | 'text' | 'tools'
+
+      /* ---- DOM ---- */
+      const tabbar = mk('div', 'tabs');
+      const toolbar = mk('div', 'toolbar');
+      toolbar.innerHTML = `
+        <button class="tb-btn" data-act="back" title="Back (Alt+←)">‹</button>
+        <button class="tb-btn" data-act="fwd" title="Forward">›</button>
+        <button class="tb-btn" data-act="reload" title="Reload (F5)">⟳</button>
+        <button class="tb-btn" data-act="home" title="Home">⌂</button>
+        <input class="inp" id="omni" placeholder="URL ya search… (Ctrl+K)" autocomplete="off" spellcheck="false">
+        <button class="tb-btn primary" data-act="go">Go</button>
+        <button class="tb-btn" data-act="panel" title="Toggle side panel">☰</button>`;
+      const frameBox = mk('div', 'br-frame');
+      const progress = mk('div', 'br-progress');
+      frameBox.appendChild(progress);
+      const panel = mk('div', 'br-side hide');
+
+      const split = mk('div', 'split');
+      split.appendChild(frameBox);
+      split.appendChild(panel);
+
+      const status = mk('div', 'statusbar');
+      status.innerHTML = `<span id="stUrl">webos://start</span><span id="stInfo"></span>`;
+
+      root.appendChild(tabbar);
+      root.appendChild(toolbar);
+      root.appendChild(split);
+      root.appendChild(status);
+
+      const omni = toolbar.querySelector('#omni');
+      const stUrl = status.querySelector('#stUrl');
+      const stInfo = status.querySelector('#stInfo');
+
+      /* ---- tabs ---- */
+      function activeTab() { return tabs.find(t => t.id === activeId) || null; }
+
+      function createTab(url, opts = {}) {
+        const id = 't' + (++tabSeq);
+        const wrap = mk('div', 'br-tabview');
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('sandbox', SANDBOX);
+        iframe.setAttribute('referrerpolicy', 'no-referrer');
+        iframe.name = 'webframe_' + id;
+        iframe.dataset.tab = id;
+        const loadingEl = mk('div', 'br-loading', '<span class="spin"></span><span>booting…</span>');
+        loadingEl.style.display = 'none';
+        wrap.appendChild(iframe);
+        wrap.appendChild(loadingEl);
+        wrap.style.display = 'none';
+        frameBox.appendChild(wrap);
+        const tab = {
+          id, iframe, wrap, loadingEl, url: url || 'webos://start', title: 'New Tab', history: [], hi: -1,
+          loading: false, elements: [], text: '', pageTitle: '', lastSnapshot: 0, loadStart: 0, loadWaiters: []
+        };
+        tabs.push(tab);
+        iframe.addEventListener('load', () => onFrameLoad(tab));
+        setActive(tab.id);
+        navigate(tab, tab.url, { replace: true, skipHistory: false });
+        renderTabs();
+        return tab;
+      }
+
+      function closeTab(id) {
+        const i = tabs.findIndex(t => t.id === id);
+        if (i < 0) return;
+        const [t] = tabs.splice(i, 1);
+        try { t.wrap.remove(); } catch (e) {}
+        if (activeId === id) {
+          const next = tabs[i] || tabs[i - 1] || null;
+          if (next) setActive(next.id); else createTab('webos://start');
+        }
+        renderTabs(); publish();
+      }
+
+      function setActive(id) {
+        activeId = id;
+        tabs.forEach(t => { t.wrap.style.display = t.id === id ? 'block' : 'none'; });
+        renderTabs(); syncToolbar(); publish();
+      }
+
+      function renderTabs() {
+        tabbar.innerHTML = '';
+        tabs.forEach(t => {
+          const d = mk('div', 'tab' + (t.id === activeId ? ' active' : ''));
+          d.dataset.tab = t.id;
+          d.innerHTML = `<span class="t">${esc(t.loading ? '… ' : '')}${esc(t.title || 'New Tab')}</span><span class="x" data-close="${t.id}">✕</span>`;
+          d.onclick = (e) => {
+            if (e.target.dataset.close) { closeTab(e.target.dataset.close); return; }
+            setActive(t.id);
+          };
+          tabbar.appendChild(d);
+        });
+        const plus = mk('div', 'tab', '<span class="t">＋</span>');
+        plus.style.maxWidth = '46px';
+        plus.title = 'New tab (Ctrl+T)';
+        plus.onclick = () => createTab('webos://start');
+        tabbar.appendChild(plus);
+      }
+
+      function syncToolbar() {
+        const t = activeTab();
+        if (!t) return;
+        if (document.activeElement !== omni) omni.value = t.url === 'webos://start' ? '' : t.url;
+        toolbar.querySelector('[data-act="back"]').disabled = t.hi <= 0;
+        toolbar.querySelector('[data-act="fwd"]').disabled = t.hi >= t.history.length - 1;
+        stUrl.textContent = t.url;
+        stInfo.textContent = localMode()
+          ? 'local mode • direct load • agent refs ke liye server chalao'
+          : `${t.elements.length} elements • ${t.text.length} chars • ${t.loading ? 'loading' : 'ready'}`;
+      }
+
+      /* ---- navigation ---- */
+      async function navigate(tab, url, opts = {}) {
+        if (!tab) return false;
+        url = String(url || '').trim();
+        if (!url) return false;
+
+        if (/^webos:\/\/search\?q=/i.test(url)) {
+          const q = decodeURIComponent(url.split('q=')[1] || '');
+          return doSearch(tab, q, opts);
+        }
+
+        // internal start page
+        if (/^webos:\/\/(start|home|newtab)$/i.test(url) || url === '') {
+          tab.url = 'webos://start';
+          tab.title = 'New Tab';
+          tab.loading = true;
+          progress.classList.add('on');
+          tab.elements = []; tab.text = ''; tab.pageTitle = '';
+          tab.loadStart = Date.now();
+          tab.pendingTarget = null;
+          tab.navSettled = true;
+          if (!opts.skipHistory) {
+            tab.history = tab.history.slice(0, tab.hi + 1);
+            tab.history.push(tab.url);
+            tab.hi = tab.history.length - 1;
+          }
+          tab.loadingEl.innerHTML = '<span class="spin"></span><span>new tab</span>';
+          tab.loadingEl.style.display = 'flex';
+          tab.iframe.removeAttribute('src');
+          tab.iframe.srcdoc = startPage();
+          renderTabs(); syncToolbar(); publish();
+          const ok0 = await waitForLoad(tab, opts.timeout || 8000);
+          return ok0;
+        }
+
+        const real = normalizeUrl(url);
+        tab.url = real;
+        tab.title = hostOf(real);
+        tab.loading = true;
+        tab.elements = [];
+        tab.text = '';
+        tab.pageTitle = '';
+        tab.loadStart = Date.now();
+        tab.pendingTarget = real;
+        tab.navSettled = false;
+        progress.classList.add('on');
+
+        if (!opts.skipHistory) {
+          tab.history = tab.history.slice(0, tab.hi + 1);
+          if (tab.history[tab.history.length - 1] !== real) tab.history.push(real);
+          tab.hi = tab.history.length - 1;
+        } else if (tab.hi < 0) {
+          tab.history = [real]; tab.hi = 0;
+        }
+
+        tab.loadingEl.innerHTML = '<span class="spin"></span><span>loading ' + esc(hostOf(real)) + '…</span>';
+        tab.loadingEl.style.display = 'flex';
+
+        tab.iframe.removeAttribute('srcdoc');
+        tab.iframe.src = proxyUrl(real);
+        renderTabs(); syncToolbar(); publish();
+
+        const ok = await waitForLoad(tab, opts.timeout || (localMode() ? 8000 : 20000));
+        publish();
+        return ok;
+      }
+
+      async function doSearch(tab, query, opts = {}) {
+        if (localMode()) {
+          // no server -> no /api/search. Just hand the query to the engine itself.
+          return navigate(tab, 'https://duckduckgo.com/?q=' + encodeURIComponent(query), { skipHistory: opts.skipHistory });
+        }
+        tab.loading = true; progress.classList.add('on');
+        tab.url = 'webos://search?q=' + encodeURIComponent(query);
+        tab.title = '🔍 ' + query;
+        if (!opts.skipHistory) {
+          tab.history = tab.history.slice(0, tab.hi + 1);
+          tab.history.push(tab.url);
+          tab.hi = tab.history.length - 1;
+        }
+        tab.loadingEl.innerHTML = '<span class="spin"></span><span>searching…</span>';
+        tab.loadingEl.style.display = 'flex';
+        let results = [], engine = null;
+        try {
+          const r = await WebOS.api.search(query);
+          results = r.results || [];
+          engine = r.engine;
+        } catch (e) {}
+        tab.iframe.removeAttribute('src');
+        tab.iframe.srcdoc = searchPage(query, results, engine);
+        tab.pendingTarget = null;
+        tab.searchResults = results;
+        tab.lastUrl = tab.url;
+        setTimeout(() => { tab.loading = false; progress.classList.remove('on'); tab.loadingEl.style.display = 'none'; renderTabs(); syncToolbar(); publish(); }, 400);
+        renderTabs(); syncToolbar(); publish();
+        return { ok: true, url: tab.url, results: results.length, engine };
+      }
+
+      function waitForLoad(tab, timeout) {
+        return new Promise((resolve) => {
+          let done = false;
+          const finish = (v) => {
+            if (done) return;
+            done = true;
+            tab.loading = false;
+            progress.classList.remove('on');
+            tab.loadingEl.style.display = 'none';
+            renderTabs(); syncToolbar(); publish();
+            resolve(v);
+          };
+          tab.loadWaiters.push(finish);
+          setTimeout(() => finish(true), timeout || 20000);
+        });
+      }
+
+      function onFrameLoad(tab) {
+        // wait until the page's own bridge reports a fresh snapshot (or give up after ~2.6s)
+        let waited = 0;
+        const check = () => {
+          const fresh = tab.navSettled === true;
+          if (fresh || waited >= 3200) {
+            const waiters = tab.loadWaiters.splice(0);
+            tab.loading = false;
+            progress.classList.remove('on');
+            tab.loadingEl.style.display = 'none';
+            waiters.forEach(w => w(true));
+            renderTabs(); syncToolbar(); publish();
+            return;
+          }
+          waited += 200;
+          setTimeout(check, 200);
+        };
+        setTimeout(check, 220);
+      }
+
+      function goBack(tab) {
+        tab = tab || activeTab();
+        if (!tab || tab.hi <= 0) return false;
+        tab.hi--; navigate(tab, tab.history[tab.hi], { skipHistory: true });
+        return true;
+      }
+      function goForward(tab) {
+        tab = tab || activeTab();
+        if (!tab || tab.hi >= tab.history.length - 1) return false;
+        tab.hi++; navigate(tab, tab.history[tab.hi], { skipHistory: true });
+        return true;
+      }
+
+      /* ---- message bus from pages ---- */
+      window.addEventListener('message', (ev) => {
+        const d = ev.data || {};
+        if (!d.__webos) return;
+        const tab = tabs.find(t => t.iframe.contentWindow === ev.source);
+        if (!tab) return;
+        if (d.type === 'page') {
+          tab.pageTitle = d.title || tab.pageTitle;
+          tab.text = d.text || '';
+          tab.elements = d.elements || [];
+          const ru = realUrl(d.url);
+          if (ru && !/^webos:/.test(ru) && !/^about:/.test(ru)) {
+            tab.url = ru;
+            if (!tab.history.length || tab.history[tab.hi] !== ru) { tab.history = tab.history.slice(0, tab.hi + 1); tab.history.push(ru); tab.hi = tab.history.length - 1; }
+          }
+          tab.title = d.title ? d.title.slice(0, 60) : tab.title;
+          tab.lastSnapshot = Date.now();
+          if (tab.pendingTarget) {
+            try {
+              const a = new URL(ru || tab.url), b = new URL(tab.pendingTarget);
+              if (a.host && a.host === b.host) { tab.navSettled = true; tab.pendingTarget = null; }
+            } catch (e) {
+              tab.navSettled = true; tab.pendingTarget = null;
+            }
+          }
+          if (tab.id === activeId) { syncToolbar(); renderPanel(); }
+          renderTabs(); publish();
+          return;
+        }
+        if (d.type === 'navigate') {
+          if (d.newTab) createTab(d.url); else navigate(activeTab() === tab ? tab : tab, d.url);
+          return;
+        }
+        if (d.type === 'form') {
+          if (d.method === 'POST') {
+            const f = document.createElement('form');
+            f.method = 'POST';
+            f.action = '/api/proxy?url=' + encodeURIComponent(d.url);
+            f.target = tab.iframe.name;
+            f.style.display = 'none';
+            new URLSearchParams(d.data).forEach((v, k) => {
+              const i = document.createElement('input'); i.name = k; i.value = v; f.appendChild(i);
+            });
+            document.body.appendChild(f);
+            f.submit();
+            setTimeout(() => f.remove(), 1500);
+          } else {
+            navigate(tab, d.url);
+          }
+          return;
+        }
+        if (d.type === 'cmdResult') {
+          const p = pendingReplies.get(d.replyId);
+          if (p) { clearTimeout(p.timer); pendingReplies.delete(d.replyId); p.resolve(d.result || { ok: false }); }
+          return;
+        }
+      });
+
+      /* ---- page commands (agent) ---- */
+      const pendingReplies = new Map();
+      let replySeq = 0;
+      function pageCmd(tab, op, payload, timeout = 6000) {
+        tab = tab || activeTab();
+        if (!tab) return Promise.resolve({ ok: false, error: 'no tab' });
+        const replyId = 'r' + (++replySeq);
+        return new Promise((resolve) => {
+          const timer = setTimeout(() => { pendingReplies.delete(replyId); resolve({ ok: false, error: 'page did not respond (cross-origin page?)' }); }, timeout);
+          pendingReplies.set(replyId, { resolve, timer });
+          try {
+            tab.iframe.contentWindow.postMessage({ __webosCmd: true, op, replyId, ...payload }, '*');
+          } catch (e) {
+            clearTimeout(timer); pendingReplies.delete(replyId);
+            resolve({ ok: false, error: e.message });
+          }
+        });
+      }
+
+      /* ---- side panel ---- */
+      function togglePanel(mode) {
+        panelMode = mode === undefined ? (panelMode ? null : 'elements') : (panelMode === mode ? null : mode);
+        panel.classList.toggle('hide', !panelMode);
+        renderPanel();
+        publish();
+      }
+
+      function renderPanel() {
+        if (!panelMode) return;
+        const t = activeTab();
+        panel.innerHTML = '';
+        const pt = mk('div', 'panel-tabs');
+        [['elements', 'Elements'], ['text', 'Text'], ['tools', 'Tools']].forEach(([m, label]) => {
+          const b = mk('button', panelMode === m ? 'active' : '', label);
+          b.onclick = () => { panelMode = m; renderPanel(); };
+          pt.appendChild(b);
+        });
+        panel.appendChild(pt);
+        const body = mk('div', 'panel-body');
+
+        if (!t) {
+          body.innerHTML = '<div class="empty">no tab</div>';
+          panel.appendChild(body);
+          return;
+        }
+
+        if (panelMode === 'elements') {
+          if (!t.elements.length) {
+            body.innerHTML = `<div class="empty"><span class="big">🖱️</span>Is page se elements nahi mile.<br>Page load hone ke baad refresh karo, ya koi normal website kholo.</div>`;
+          } else {
+            const info = mk('div', '', `<div style="color:var(--muted);font-size:11px;margin-bottom:8px">${t.elements.length} interactive elements — agent <code>click {ref}</code> / <code>type {ref,text}</code> use karta hai</div>`);
+            body.appendChild(info);
+            t.elements.forEach(e => {
+              const row = mk('div', 'el');
+              row.dataset.ref = e.ref;
+              row.innerHTML = `<div><span class="k">#${e.ref} ${esc(e.kind)}</span>${esc((e.text || '').slice(0, 90))}</div>${e.href ? `<div class="u">${esc(e.href.slice(0, 90))}</div>` : ''}`;
+              row.onclick = () => { pageCmd(t, 'select', { ref: e.ref }); };
+              row.ondblclick = () => { pageCmd(t, 'click', { ref: e.ref }); };
+              body.appendChild(row);
+            });
+          }
+        } else if (panelMode === 'text') {
+          const pre = mk('div', 'reader-text', esc(t.text || '(no text captured yet)'));
+          body.appendChild(pre);
+        } else {
+          body.innerHTML = `
+            <div class="kv">
+              <b>URL</b><span class="mono" style="word-break:break-all">${esc(t.url)}</span>
+              <b>Title</b><span>${esc(t.title)}</span>
+              <b>Elements</b><span>${t.elements.length}</span>
+              <b>Text chars</b><span>${t.text.length}</span>
+              <b>Last snapshot</b><span>${t.lastSnapshot ? new Date(t.lastSnapshot).toLocaleTimeString() : '—'}</span>
+              <b>History</b><span>${t.hi + 1}/${t.history.length}</span>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+              <button class="tb-btn" data-t="snap">🔄 snapshot</button>
+              <button class="tb-btn" data-t="scroll">↓ scroll</button>
+              <button class="tb-btn" data-t="reader">📖 server text</button>
+            </div>
+            <div id="toolsOut" class="mono" style="margin-top:10px;font-size:11px;color:var(--muted);white-space:pre-wrap"></div>`;
+          body.querySelectorAll('[data-t]').forEach(b => {
+            b.onclick = async () => {
+              const out = body.querySelector('#toolsOut');
+              const act = b.dataset.t;
+              if (act === 'snap') { await pageCmd(t, 'snapshot', {}); out.textContent = 'snapshot requested'; }
+              if (act === 'scroll') { const r = await pageCmd(t, 'scroll', { y: 700 }); out.textContent = JSON.stringify(r); }
+              if (act === 'reader') {
+                out.textContent = 'fetching…';
+                try {
+                  const r = await WebOS.api.readUrl(t.url);
+                  t.text = r.text || t.text; t.title = r.title || t.title;
+                  panelMode = 'text'; renderPanel(); publish();
+                } catch (e) { out.textContent = 'failed: ' + e.message; }
+              }
+            };
+          });
+        }
+        panel.appendChild(body);
+      }
+
+      /* ---- toolbar wiring ---- */
+      toolbar.addEventListener('click', (e) => {
+        const act = e.target.dataset && e.target.dataset.act;
+        if (!act) return;
+        const t = activeTab();
+        if (act === 'back') goBack(t);
+        if (act === 'fwd') goForward(t);
+        if (act === 'reload') navigate(t, t.url, { skipHistory: true });
+        if (act === 'home') navigate(t, 'webos://start', { skipHistory: false });
+        if (act === 'go') submitOmni();
+        if (act === 'panel') togglePanel();
+      });
+      function submitOmni() {
+        const v = omni.value.trim();
+        if (!v) return;
+        const url = looksLikeUrl(v) ? normalizeUrl(v) : ('webos://search?q=' + encodeURIComponent(v));
+        navigate(activeTab(), url);
+      }
+      omni.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitOmni(); });
+      omni.addEventListener('focus', () => omni.select());
+
+      root.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key.toLowerCase() === 'k') { e.preventDefault(); omni.focus(); }
+        if (e.ctrlKey && e.key.toLowerCase() === 't') { e.preventDefault(); createTab('webos://start'); }
+        if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); goBack(); }
+        if (e.key === 'F5') { e.preventDefault(); const t = activeTab(); navigate(t, t.url, { skipHistory: true }); }
+      });
+
+      /* ---- state for the agent ---- */
+      function publish() {
+        const t = activeTab();
+        a.publishState({
+          searchResults: t && t.searchResults ? t.searchResults.slice(0, 10) : [],
+          url: t ? t.url : null,
+          title: t ? t.title : null,
+          loading: t ? t.loading : false,
+          tabs: tabs.map(x => ({ id: x.id, url: x.url, title: x.title, active: x.id === activeId })),
+          elements: t ? t.elements.slice(0, 60) : [],
+          elementCount: t ? t.elements.length : 0,
+          textPreview: t ? (t.text || '').slice(0, 4000) : '',
+          panel: panelMode
+        });
+      }
+
+      /* ---- agent command handler ---- */
+      async function handleCommand(cmd) {
+        const args = cmd.args || {};
+        const op = String(cmd.op || '').toLowerCase();
+        const t = activeTab();
+
+        switch (op) {
+          case 'navigate': case 'goto': case 'open-url':
+          case 'browse': {
+            const url = args.url || args.href || cmd.url;
+            if (!url) return { ok: false, error: 'args.url required' };
+            if (args.newTab || args.newWindow) { const nt = createTab(url); return { ok: true, tab: nt.id, url }; }
+            const target = tabs.find(x => x.id === args.tab) || t;
+            const res = await navigate(target, url, { timeout: args.timeout || 20000 });
+            return {
+              ok: res !== false, url: target.url, title: target.title,
+              elements: target.elements.length, textPreview: (target.text || '').slice(0, 1500)
+            };
+          }
+          case 'search': {
+            const q = args.q || args.query || args.text;
+            if (!q) return { ok: false, error: 'args.q required' };
+            const r = await doSearch(t, q);
+            return {
+              ok: true, url: t.url, count: r.results, engine: r.engine, query: q,
+              results: (t.searchResults || []).slice(0, Number(args.limit) || 15).map(x => ({ title: x.title, url: x.url, snippet: (x.snippet || '').slice(0, 200) }))
+            };
+          }
+          case 'back': return { ok: goBack(t), url: t ? t.url : null };
+          case 'forward': case 'fwd': return { ok: goForward(t), url: t ? t.url : null };
+          case 'reload': case 'refresh': await navigate(t, t.url, { skipHistory: true }); return { ok: true, url: t.url };
+          case 'home': await navigate(t, 'webos://start'); return { ok: true, url: 'webos://start' };
+          case 'read': case 'snapshot': {
+            if (localMode() && t && t.elements.length === 0) {
+              return {
+                ok: false, localMode: true, url: t.url,
+                error: 'local (single-file) build me page ke andar inject nahi ho sakta — ' +
+                       'elements/text ke liye server mode chalao: node server.js'
+              };
+            }
+            const mode = args.mode || 'auto';
+            let text = t ? t.text : '';
+            let title = t ? t.title : '';
+            let url = t ? t.url : '';
+            let elements = t ? t.elements : [];
+            if ((mode === 'server' || !text || text.length < 60) && url && !/^webos:/.test(url)) {
+              try {
+                const r = await WebOS.api.readUrl(url);
+                if (r && !r.error) { text = r.text || text; title = r.title || title; }
+              } catch (e) {}
+            }
+            if (mode === 'elements') return { ok: true, url, title, elements: elements.slice(0, Number(args.limit) || 100) };
+            if (mode === 'text') return { ok: true, url, title, text: (text || '').slice(0, Number(args.limit) || 20000) };
+            return {
+              ok: true, url, title,
+              text: (text || '').slice(0, Number(args.limit) || 12000),
+              elements: elements.slice(0, Number(args.limit) || 100)
+            };
+          }
+          case 'links': {
+            return { ok: true, links: (t ? t.elements : []).filter(e => e.kind === 'link').map(e => ({ ref: e.ref, text: e.text, href: e.href })) };
+          }
+          case 'inputs': {
+            return {
+              ok: true,
+              inputs: (t ? t.elements : []).filter(e => e.kind === 'input').map(e => ({ ref: e.ref, tag: e.tag, name: e.name, type: e.type, text: e.text })),
+              buttons: (t ? t.elements : []).filter(e => e.kind !== 'input').slice(0, 25).map(e => ({ ref: e.ref, text: e.text, href: e.href }))
+            };
+          }
+          case 'click': {
+            if (!t) return { ok: false, error: 'no tab' };
+            let ref = args.ref;
+            if (!ref && (args.text || args.selector)) {
+              const needle = String(args.text || args.selector).toLowerCase().trim();
+              const pool = t.elements.filter(e => e.kind !== 'input');
+              const exact = pool.find(e => (e.text || '').toLowerCase().trim() === needle);
+              const starts = pool.find(e => (e.text || '').toLowerCase().trim().startsWith(needle));
+              const has = pool.find(e => (e.text || '').toLowerCase().includes(needle));
+              const inp = t.elements.find(e => e.kind === 'input' && (e.text || '').toLowerCase().includes(needle));
+              const picked = exact || starts || has || inp;
+              ref = picked && picked.ref;
+              if (!ref) return { ok: false, error: 'no element matching: ' + needle, elements: t.elements.slice(0, 40) };
+              if (!args.expect && picked.href) { /* let it navigate normally */ }
+            }
+            if (!ref) return { ok: false, error: 'args.ref or args.text required' };
+            const r = await pageCmd(t, 'click', { ref: Number(ref) });
+            if (args.wait !== false) await new Promise(res => setTimeout(res, args.settle || 900));
+            return { ok: r.ok !== false, clicked: Number(ref), url: t.url, title: t.title, error: r.error, elements: t.elements.length };
+          }
+          case 'type': case 'fill': {
+            if (!t) return { ok: false, error: 'no tab' };
+            let ref = args.ref;
+            if (!ref && args.selector) {
+              const f = t.elements.find(e => e.kind === 'input' && (e.text || '').toLowerCase().includes(String(args.selector).toLowerCase()));
+              ref = f && f.ref;
+            }
+            const BAD_TYPES = ['submit', 'button', 'reset', 'image', 'checkbox', 'radio', 'file', 'hidden'];
+            const textInputs = () => t.elements.filter(e =>
+              e.kind === 'input' && !BAD_TYPES.includes(String(e.type || '').toLowerCase()) && e.tag !== 'select' && e.tag !== 'button');
+            if (!ref && args.field != null && textInputs().length) {
+              const list = textInputs();
+              const idx = Number(args.field) || 0;
+              ref = list[idx] && list[idx].ref;
+            }
+            if (!ref && (args.field != null)) {
+              const list = textInputs();
+              if (!ref) return { ok: false, error: 'no text input at field ' + args.field, inputs: list.map(e => ({ ref: e.ref, name: e.name, type: e.type })) };
+            }
+            if (!ref) return { ok: false, error: 'args.ref / args.field required', inputs: t.elements.filter(e => e.kind === 'input') };
+            const text = String(args.text != null ? args.text : args.value != null ? args.value : '');
+            const r = await pageCmd(t, 'type', { ref: Number(ref), text, submit: !!args.submit });
+            if (args.submit || args.wait) await new Promise(res => setTimeout(res, args.settle || 1600));
+            publish();
+            return { ok: r.ok !== false, ref: Number(ref), typed: text, url: t.url, error: r.error };
+          }
+          case 'press': case 'key': {
+            if (!t) return { ok: false, error: 'no tab' };
+            const r = await pageCmd(t, 'key', { key: args.key || 'Enter' });
+            return { ok: r.ok !== false, error: r.error };
+          }
+          case 'scroll': {
+            if (!t) return { ok: false, error: 'no tab' };
+            const r = await pageCmd(t, args.y === 'bottom' ? 'scrollTo' : 'scroll', { y: args.y === 'bottom' ? 999999 : Number(args.y) || 700 });
+            return { ok: r.ok !== false, error: r.error };
+          }
+          case 'eval': {
+            if (!t) return { ok: false, error: 'no tab' };
+            if (!args.code) return { ok: false, error: 'args.code required' };
+            const r = await pageCmd(t, 'eval', { code: args.code });
+            return { ok: r.ok !== false, value: r.value, error: r.error };
+          }
+          case 'tabs': return { ok: true, tabs: tabs.map(x => ({ id: x.id, url: x.url, title: x.title, active: x.id === activeId })) };
+          case 'newtab': { const nt = createTab(args.url || 'webos://start'); return { ok: true, tab: nt.id }; }
+          case 'closetab': {
+            if (args.id) { closeTab(args.id); return { ok: true }; }
+            if (t) { closeTab(t.id); return { ok: true }; }
+            return { ok: false, error: 'no tab' };
+          }
+          case 'switchtab': {
+            const target = tabs.find(x => x.id === args.id) || tabs[Number(args.index) || 0];
+            if (!target) return { ok: false, error: 'tab not found', tabs: tabs.map(x => x.id) };
+            setActive(target.id);
+            return { ok: true, tab: target.id, url: target.url };
+          }
+          case 'panel': {
+            if (args.mode === 'off') { panelMode = null; panel.classList.add('hide'); }
+            else togglePanel(args.mode || 'elements');
+            return { ok: true, panel: panelMode };
+          }
+          case 'extract': {
+            // server-side text extraction of any url, works without executing the page
+            const url = args.url || (t && t.url);
+            if (!url) return { ok: false, error: 'no url' };
+            try {
+              const r = await WebOS.api.readUrl(url);
+              return { ok: true, url: r.url || url, title: r.title, text: (r.text || '').slice(0, Number(args.limit) || 12000), linkCount: (r.links || []).length, links: (r.links || []).slice(0, 60) };
+            } catch (e) { return { ok: false, error: e.message }; }
+          }
+          default:
+            return null; // not a browser op -> let other handlers try
+        }
+      }
+
+      /* ---- init ---- */
+      const startUrl = (a.args && (a.args.url || a.args.arg)) || 'webos://start';
+      createTab(startUrl);
+      a.setTitle('Browser', hostOf(startUrl));
+      const origPublish = publish;
+      publish = function () { origPublish(); const t = activeTab(); a.setSubtitle(t ? hostOf(t.url) : ''); };
+
+      return {
+        handleCommand,
+        onArgs(nargs) { if (nargs && nargs.url) navigate(activeTab(), nargs.url); else if (nargs && nargs.arg) navigate(activeTab(), nargs.arg); },
+        state() {
+          const t = activeTab();
+          return {
+            url: t ? t.url : null, title: t ? t.title : null, loading: t ? t.loading : false,
+            tabs: tabs.map(x => ({ id: x.id, url: x.url, title: x.title, active: x.id === activeId })),
+            elements: t ? t.elements.slice(0, 80) : [],
+            elementCount: t ? t.elements.length : 0,
+            textPreview: t ? (t.text || '').slice(0, 4000) : '',
+            panel: panelMode
+          };
+        },
+        destroy() {
+          tabs.forEach(t => { try { t.wrap.remove(); } catch (e) {} });
+          tabs = [];
+        }
+      };
+    }
+  });
+})();
+
+</script>
+<script>
+/* ============ Files — virtual filesystem browser ============ */
+(function () {
+  'use strict';
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function mk(t, c, h) { const n = document.createElement(t); if (c) n.className = c; if (h != null) n.innerHTML = h; return n; }
+  const icon = (e) => e.type === 'dir' ? '📁' : /\.(md|txt|log|json|js|css|html)$/i.test(e.name) ? '📄' : '📃';
+  const fmt = (b) => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(1) + ' MB';
+
+  WebOS.registerApp({
+    id: 'files', name: 'Files', icon: '📁', width: 900, height: 560,
+    mount(a) {
+      let cwd = (a.args && (a.args.path || a.args.arg)) || '/Home';
+      let sel = null;
+
+      const root = a.win.body;
+      const toolbar = mk('div', 'toolbar');
+      toolbar.innerHTML = `
+        <button class="tb-btn" data-a="up" title="Up">⬆</button>
+        <button class="tb-btn" data-a="refresh" title="Refresh">⟳</button>
+        <input class="inp mono" id="pathin" spellcheck="false">
+        <button class="tb-btn" data-a="newdir">＋ Folder</button>
+        <button class="tb-btn" data-a="newfile">＋ File</button>
+        <button class="tb-btn" data-a="rename" disabled>✏️</button>
+        <button class="tb-btn" data-a="delete" disabled>🗑</button>
+        <button class="tb-btn" data-a="download" disabled>⤓</button>`;
+      const split = mk('div', 'split');
+      const side = mk('div', 'side');
+      const list = mk('div', 'list');
+      split.appendChild(side); split.appendChild(list);
+      const status = mk('div', 'statusbar');
+      root.appendChild(toolbar); root.appendChild(split); root.appendChild(status);
+
+      const pathin = toolbar.querySelector('#pathin');
+      pathin.addEventListener('keydown', (e) => { if (e.key === 'Enter') { cwd = pathin.value.trim() || cwd; refresh(); } });
+
+      toolbar.addEventListener('click', async (e) => {
+        const act = e.target.dataset && e.target.dataset.a;
+        if (!act) return;
+        if (act === 'up') { cwd = cwd.replace(/\/[^/]+\/?$/, '') || '/'; refresh(); }
+        if (act === 'refresh') refresh();
+        if (act === 'newdir') {
+          const name = await WebOS.prompt('New folder name', '', 'e.g. Projects');
+          if (name) { await WebOS.api.fs.mkdir(cwd.replace(/\/$/, '') + '/' + name); refresh(); }
+        }
+        if (act === 'newfile') {
+          const name = await WebOS.prompt('New file name', 'untitled.txt', 'notes.txt');
+          if (name) { await WebOS.api.fs.write(cwd.replace(/\/$/, '') + '/' + name, ''); refresh(); }
+        }
+        if (act === 'rename' && sel) {
+          const name = await WebOS.prompt('Rename "' + sel.name + '"', sel.name);
+          if (name && name !== sel.name) { await WebOS.api.fs.move(join(cwd, sel.name), join(cwd, name)); sel = null; refresh(); }
+        }
+        if (act === 'delete' && sel) {
+          const ok = await WebOS.confirm('Delete "' + sel.name + '"?');
+          if (ok) { await WebOS.api.fs.rm(join(cwd, sel.name), true); sel = null; refresh(); }
+        }
+        if (act === 'download' && sel && sel.type === 'file') {
+          const r = await WebOS.api.fs.read(join(cwd, sel.name));
+          const blob = new Blob([r.content || ''], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url; link.download = sel.name; link.click();
+          setTimeout(() => URL.revokeObjectURL(url), 4000);
+        }
+      });
+
+      function join(base, name) { return (base.replace(/\/$/, '') || '') + '/' + name; }
+      function setSel(entry) {
+        sel = entry;
+        toolbar.querySelector('[data-a="rename"]').disabled = !sel;
+        toolbar.querySelector('[data-a="delete"]').disabled = !sel;
+        toolbar.querySelector('[data-a="download"]').disabled = !(sel && sel.type === 'file');
+        Array.from(list.children).forEach(r => r.classList.toggle('sel', sel && r.dataset.name === sel.name));
+      }
+
+      async function refresh() {
+        const r = await WebOS.api.fs.list(cwd);
+        if (r.error) { list.innerHTML = `<div class="empty"><span class="big">⚠️</span>${esc(r.error)}</div>`; return; }
+        cwd = r.path || cwd;
+        pathin.value = cwd;
+        a.setTitle('Files', cwd);
+        list.innerHTML = '';
+        if (!r.entries.length) list.innerHTML = '<div class="empty"><span class="big">📂</span>Ye folder khaali hai</div>';
+        r.entries.forEach(entry => {
+          const row = mk('div', 'row');
+          row.dataset.name = entry.name;
+          row.dataset.type = entry.type;
+          row.innerHTML = `<span class="ic">${icon(entry)}</span><span>${esc(entry.name)}</span>
+            <span class="meta">${entry.type === 'dir' ? entry.size + ' items' : fmt(entry.size)} · ${new Date(entry.modified).toLocaleDateString()}</span>`;
+          row.onclick = () => setSel(entry);
+          row.ondblclick = () => {
+            if (entry.type === 'dir') { cwd = join(cwd, entry.name); sel = null; refresh(); }
+            else WebOS.open('editor', { path: join(cwd, entry.name) });
+          };
+          list.appendChild(row);
+        });
+        const st = await WebOS.api.get('/api/fs/stats');
+        status.innerHTML = `<span>${r.entries.length} items</span><span>disk: ${fmt(st.bytes || 0)} in ${st.files || 0} files</span><span>${esc(cwd)}</span>`;
+        a.publishState({ cwd, entries: r.entries.map(x => ({ name: x.name, type: x.type, size: x.size })) });
+      }
+
+      async function buildSide() {
+        const r = await WebOS.api.fs.list('/');
+        side.innerHTML = '';
+        const places = [['🏠 Home', '/Home'], ['📄 Documents', '/Home/Documents'], ['⬇ Downloads', '/Home/Downloads'], ['🛠 Projects', '/Home/Projects'], ['🖼 Pictures', '/Home/Pictures'], ['💿 / (root)', '/']];
+        if (r.entries) r.entries.forEach(e => { if (e.type === 'dir' && !places.some(p => p[1] === '/' + e.name)) places.push(['📁 ' + e.name, '/' + e.name]); });
+        places.forEach(([label, p]) => {
+          const i = mk('div', 'item', label);
+          i.dataset.path = p;
+          i.onclick = () => { cwd = p; setSel(null); refresh(); };
+          side.appendChild(i);
+        });
+      }
+
+      buildSide(); refresh();
+      return {
+        handleCommand(cmd) {
+          const args = cmd.args || {};
+          const op = String(cmd.op || '').toLowerCase();
+          if (op === 'list' || op === 'ls') {
+            if (args.path) cwd = args.path;
+            refresh();
+            return { ok: true, path: cwd };
+          }
+          if (op === 'cd' || op === 'openpath') {
+            if (!args.path) return { ok: false, error: 'args.path required' };
+            cwd = args.path; sel = null; refresh();
+            return { ok: true, path: cwd };
+          }
+          if (op === 'select') {
+            const row = Array.from(list.children).find(r => r.dataset.name === (args.name || args.text));
+            if (!row) return { ok: false, error: 'entry not found: ' + args.name };
+            row.click();
+            return { ok: true, selected: args.name };
+          }
+          if (op === 'openitem' || op === 'dblclick') {
+            const row = Array.from(list.children).find(r => r.dataset.name === (args.name || args.text));
+            if (!row) return { ok: false, error: 'entry not found' };
+            row.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+            return { ok: true, opened: args.name };
+          }
+          return null;
+        },
+        state() { return { cwd, selected: sel && sel.name }; }
+      };
+    }
+  });
+})();
+
+</script>
+<script>
+/* ============ Editor — text/markdown editor on the virtual FS ============ */
+(function () {
+  'use strict';
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function mk(t, c, h) { const n = document.createElement(t); if (c) n.className = c; if (h != null) n.innerHTML = h; return n; }
+
+  WebOS.registerApp({
+    id: 'editor', name: 'Editor', icon: '📝', width: 820, height: 580,
+    mount(a) {
+      let path = (a.args && (a.args.path || a.args.arg)) || null;
+      let dirty = false;
+
+      const root = a.win.body;
+      const toolbar = mk('div', 'toolbar');
+      toolbar.innerHTML = `
+        <button class="tb-btn" data-a="new">＋ New</button>
+        <button class="tb-btn" data-a="open">📂 Open</button>
+        <button class="tb-btn primary" data-a="save">💾 Save</button>
+        <button class="tb-btn" data-a="saveas">Save as…</button>
+        <button class="tb-btn" data-a="download">⤓</button>
+        <button class="tb-btn" data-a="preview">👁 Preview</button>
+        <input class="inp mono" id="pathin" placeholder="/Home/Documents/notes.txt" spellcheck="false">`;
+      const area = mk('textarea', 'editor');
+      area.spellcheck = false;
+      const status = mk('div', 'statusbar');
+      root.appendChild(toolbar); root.appendChild(area); root.appendChild(status);
+
+      const pathin = toolbar.querySelector('#pathin');
+      pathin.addEventListener('keydown', (e) => { if (e.key === 'Enter') load(pathin.value.trim()); });
+      area.addEventListener('input', () => { dirty = true; setStatus(); });
+
+      toolbar.addEventListener('click', async (e) => {
+        const act = e.target.dataset && e.target.dataset.a;
+        if (!act) return;
+        if (act === 'new') { path = null; area.value = ''; dirty = false; pathin.value = ''; a.setTitle('Editor', 'untitled'); setStatus(); }
+        if (act === 'open') {
+          const p = await WebOS.prompt('Open file path', path || '/Home/Documents/welcome.txt');
+          if (p) load(p);
+        }
+        if (act === 'save') {
+          let p = path;
+          if (!p) { p = await WebOS.prompt('Save as path', '/Home/Documents/untitled.txt'); if (!p) return; }
+          const r = await WebOS.api.fs.write(p, area.value);
+          if (r.error) { WebOS.notify(r.error, 'err', 'save failed'); return; }
+          path = p; pathin.value = p; dirty = false;
+          a.setTitle('Editor', p.split('/').pop());
+          WebOS.notify('Saved ' + p, 'ok', 'editor');
+          setStatus();
+          a.publishState({ path, bytes: area.value.length, dirty: false });
+        }
+        if (act === 'saveas') {
+          const p = await WebOS.prompt('Save as path', path || '/Home/Documents/untitled.txt');
+          if (!p) return;
+          path = p; pathin.value = p;
+          const r = await WebOS.api.fs.write(p, area.value);
+          if (!r.error) { dirty = false; WebOS.notify('Saved ' + p, 'ok', 'editor'); }
+          setStatus();
+        }
+        if (act === 'download') {
+          const blob = new Blob([area.value], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const l = document.createElement('a');
+          l.href = url; l.download = (path || 'untitled.txt').split('/').pop(); l.click();
+          setTimeout(() => URL.revokeObjectURL(url), 4000);
+        }
+        if (act === 'preview') togglePreview();
+      });
+
+      /* markdown-ish preview */
+      let previewing = false;
+      const previewEl = mk('div', 'doc');
+      previewEl.style.cssText = 'flex:1;overflow:auto;padding:16px';
+      previewEl.style.display = 'none';
+      root.insertBefore(previewEl, status);
+      function mdToHtml(md) {
+        let h = esc(md);
+        h = h.replace(/^### (.*)$/gm, '<h3>$1</h3>')
+             .replace(/^## (.*)$/gm, '<h2>$1</h2>')
+             .replace(/^# (.*)$/gm, '<h1>$1</h1>')
+             .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+             .replace(/`([^`]+)`/g, '<code>$1</code>')
+             .replace(/^\- (.*)$/gm, '<li>$1</li>')
+             .replace(/(<li>.*<\/li>\n?)+/g, m => '<ul>' + m + '</ul>')
+             .replace(/\n{2,}/g, '</p><p>');
+        return '<p>' + h.replace(/\n/g, '<br>') + '</p>';
+      }
+      function togglePreview() {
+        previewing = !previewing;
+        area.style.display = previewing ? 'none' : 'block';
+        previewEl.style.display = previewing ? 'block' : 'none';
+        if (previewing) previewEl.innerHTML = mdToHtml(area.value);
+      }
+
+      async function load(p) {
+        if (!p) return;
+        const r = await WebOS.api.fs.read(p);
+        if (r.error) {
+          // File abhi exist nahi karta -> naya file banao (path yaad rakho, Save se create ho jayega).
+          // Agent ke liye bhi yahi behaviour chahiye: open + edit + save = create.
+          if (/no such file/i.test(r.error)) {
+            path = p; area.value = ''; dirty = false;
+            pathin.value = p;
+            a.setTitle('Editor', p.split('/').pop() + ' (new)');
+            setStatus();
+            a.publishState({ path, bytes: 0, dirty: false, isNew: true });
+            return;
+          }
+          WebOS.notify(r.error, 'err', 'editor');
+          return;
+        }
+        path = r.path; area.value = r.content || ''; dirty = false;
+        pathin.value = path;
+        a.setTitle('Editor', path.split('/').pop());
+        setStatus();
+        a.publishState({ path, bytes: area.value.length, dirty: false });
+      }
+
+      function setStatus() {
+        const lines = area.value.split('\n').length;
+        status.innerHTML = `<span>${path ? esc(path) : 'unsaved'}</span><span>${lines} lines · ${area.value.length} chars</span><span>${dirty ? '● unsaved changes' : 'saved'}</span>`;
+      }
+
+      if (path) load(path); else { a.setTitle('Editor', 'untitled'); setStatus(); }
+
+      return {
+        handleCommand(cmd) {
+          const args = cmd.args || {};
+          const op = String(cmd.op || '').toLowerCase();
+          if (['edit', 'append', 'insert', 'setcontent', 'replace'].includes(op)) {
+            if (args.path) path = args.path;
+            const text = String(args.text != null ? args.text : args.content != null ? args.content : '');
+            if (op === 'append' || op === 'insert') area.value += (area.value.endsWith('\n') || !area.value ? '' : '\n') + text;
+            else area.value = text;
+            area.dispatchEvent(new Event('input', { bubbles: true }));
+            if (args.save) {
+              const p = path || args.path;
+              if (p) WebOS.api.fs.write(p, area.value).then(() => { dirty = false; setStatus(); });
+            }
+            return { ok: true, path, bytes: area.value.length };
+          }
+          if (op === 'read' || op === 'getcontent') {
+            return { ok: true, path, content: area.value, bytes: area.value.length, dirty };
+          }
+          if (op === 'save') {
+            if (!path) return { ok: false, error: 'no path — use saveas {path}' };
+            WebOS.api.fs.write(path, area.value);
+            dirty = false; setStatus();
+            return { ok: true, path, bytes: area.value.length };
+          }
+          if (op === 'saveas') {
+            if (!args.path) return { ok: false, error: 'args.path required' };
+            path = args.path; pathin.value = path;
+            WebOS.api.fs.write(path, area.value);
+            dirty = false; setStatus();
+            return { ok: true, path };
+          }
+          if (op === 'preview') { if (!previewing) togglePreview(); return { ok: true }; }
+          return null;
+        },
+        state() { return { path, bytes: area.value.length, dirty }; }
+      };
+    }
+  });
+})();
+
+</script>
+<script>
+/* ============ Terminal — WebOS shell ============ */
+(function () {
+  'use strict';
+  function mk(t, c, h) { const n = document.createElement(t); if (c) n.className = c; if (h != null) n.innerHTML = h; return n; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  WebOS.registerApp({
+    id: 'terminal', name: 'Terminal', icon: '⌨️', width: 760, height: 460,
+    mount(a) {
+      let cwd = (a.args && (a.args.cwd || a.args.path)) || '/Home';
+      const sessionId = 'term-' + a.win.id;
+      const hist = [];
+      let hp = -1;
+
+      const root = a.win.body;
+      const out = mk('div', 'term');
+      const row = mk('div', 'term-input-row');
+      row.innerHTML = `<span class="ps1"></span><input spellcheck="false" autocomplete="off" placeholder="type a command… (help)">`;
+      root.appendChild(out); root.appendChild(row);
+
+      const ps1 = row.querySelector('.ps1');
+      const input = row.querySelector('input');
+      const setPs1 = () => { ps1.textContent = 'agent@webos:' + cwd + '$'; a.setTitle('Terminal', cwd); };
+
+      function print(text, cls) {
+        const d = mk('div', 'line ' + (cls || ''), esc(text));
+        out.appendChild(d);
+        out.scrollTop = out.scrollHeight;
+      }
+      function printf(html, cls) {
+        const d = mk('div', 'line ' + (cls || ''), html);
+        out.appendChild(d);
+        out.scrollTop = out.scrollHeight;
+      }
+
+      print('WebOS shell 1.0  —  `help` likho commands ke liye, `apps` se saare apps dekho');
+      print('');
+
+      async function exec(line) {
+        if (!line.trim()) return;
+        hist.push(line); hp = hist.length;
+        printf('<span class="cmd">agent@webos:' + esc(cwd) + '$</span> ' + esc(line));
+        try {
+          const r = await WebOS.api.shell(line, cwd);
+          if (r.out === '__CLEAR__') { out.innerHTML = ''; }
+          else if (r.out) print(r.out, r.code === 0 ? '' : 'err');
+          if (r.cwd && r.cwd !== cwd) { cwd = r.cwd; setPs1(); }
+          if (r.code !== 0 && r.out && !r.out.trim().startsWith('command not found')) { /* already printed */ }
+          a.publishState({ cwd, lastCommand: line });
+        } catch (e) {
+          print('shell error: ' + e.message, 'err');
+        }
+      }
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const v = input.value;
+          input.value = '';
+          exec(v);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (hp > 0) { hp--; input.value = hist[hp] || ''; }
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (hp < hist.length - 1) { hp++; input.value = hist[hp] || ''; } else { hp = hist.length; input.value = ''; }
+        } else if (e.key === 'l' && e.ctrlKey) {
+          e.preventDefault(); out.innerHTML = '';
+        }
+      });
+      setTimeout(() => input.focus(), 200);
+
+      if (a.args && a.args.cmd) setTimeout(() => exec(a.args.cmd), 300);
+
+      return {
+        handleCommand(cmd) {
+          const args = cmd.args || {};
+          const op = String(cmd.op || '').toLowerCase();
+          if (op === 'shell' || op === 'run' || op === 'exec') {
+            const c = args.cmd || args.command || args.text;
+            if (!c) return { ok: false, error: 'args.cmd required' };
+            return new Promise(async (resolve) => {
+              const r = await WebOS.api.shell(c, args.cwd || cwd);
+              if (r.cwd) { cwd = r.cwd; setPs1(); }
+              printf('<span class="cmd">agent@webos:' + esc(cwd) + '$</span> ' + esc(c));
+              if (r.out && r.out !== '__CLEAR__') print(r.out, r.code === 0 ? '' : 'err');
+              a.publishState({ cwd, lastCommand: c });
+              resolve({ ok: r.code === 0, out: r.out, code: r.code, cwd: r.cwd });
+            });
+          }
+          if (op === 'focusinput') { input.focus(); return { ok: true }; }
+          return null;
+        },
+        state() { return { cwd, sessionId, history: hist.slice(-10) }; }
+      };
+    }
+  });
+})();
+
+</script>
+<script>
+/* ============ Agent Console — live view of agent <-> OS traffic ============ */
+(function () {
+  'use strict';
+  function mk(t, c, h) { const n = document.createElement(t); if (c) n.className = c; if (h != null) n.innerHTML = h; return n; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  WebOS.registerApp({
+    id: 'agent', name: 'Agent Console', icon: '🤖', width: 560, height: 420,
+    mount(a) {
+      let mode = 'log';
+      let since = 0;
+      let timer = null;
+
+      const root = a.win.body;
+      const head = mk('div', 'toolbar');
+      head.innerHTML = `
+        <span class="pill" id="agStatus"><span class="dot"></span><span id="agStatusText">…</span></span>
+        <input class="inp" id="cmdop" placeholder="op (e.g. open / navigate / read)" spellcheck="false" style="max-width:190px;flex:0 0 190px">
+        <input class="inp" id="cmdargs" placeholder='args JSON {"app":"files"}' spellcheck="false">
+        <button class="tb-btn primary" data-a="send">Send</button>`;
+      const tabs = mk('div', 'panel-tabs');
+      [['log', 'Activity'], ['state', 'State'], ['help', 'Help']].forEach(([m, l]) => {
+        const b = mk('button', m === mode ? 'active' : '', l);
+        b.dataset.m = m;
+        b.onclick = () => { mode = m; tabs.querySelectorAll('button').forEach(x => x.classList.toggle('active', x.dataset.m === m)); render(); };
+        tabs.appendChild(b);
+      });
+      const body = mk('div', 'ag-log');
+      root.appendChild(head); root.appendChild(tabs); root.appendChild(body);
+
+      const statusPill = head.querySelector('#agStatus');
+      const statusText = head.querySelector('#agStatusText');
+
+      head.addEventListener('click', async (e) => {
+        if (!e.target.dataset || e.target.dataset.a !== 'send') return;
+        const op = head.querySelector('#cmdop').value.trim();
+        if (!op) { WebOS.notify('op likho pehle', 'warn', 'agent console'); return; }
+        let args = {};
+        const raw = head.querySelector('#cmdargs').value.trim();
+        if (raw) { try { args = JSON.parse(raw); } catch (er) { WebOS.notify('bad JSON args: ' + er.message, 'err', 'agent console'); return; } }
+        render(); // switch to log view
+        mode = 'log';
+        tabs.querySelectorAll('button').forEach(x => x.classList.toggle('active', x.dataset.m === 'log'));
+        const r = await WebOS.api.post('/api/agent/cmd', { op, args, wait: true, timeout: 20000 });
+        WebOS.notify((op + ' → ' + (r.ok ? 'ok' : 'fail: ' + (r.error || ''))).slice(0, 200), r.ok ? 'ok' : 'err', 'agent console');
+        poll();
+      });
+
+      function render() {
+        body.innerHTML = '';
+        if (mode === 'log') {
+          body.id = 'aglog';
+          poll();
+        } else if (mode === 'state') {
+          const s = WebOS.state();
+          s.bridge = { clientId: WebOS.clientId, connected: WebOS.bridge && WebOS.bridge.connected(), recentCommands: (WebOS.bridge && WebOS.bridge.history()) || [] };
+          body.innerHTML = `<pre class="mono" style="font-size:11px;white-space:pre-wrap;margin:0">${esc(JSON.stringify(s, null, 2))}</pre>`;
+        } else {
+          body.innerHTML = `<div style="font-size:12px;line-height:1.7">
+            <b style="color:var(--accent)">Agent yahan se OS control karta hai</b>
+            <div style="height:8px"></div>
+            <code>POST /api/agent/cmd</code> — body: <code>{"op":"open","app":"browser","args":{"url":"https://example.com"},"wait":true}</code><br>
+            <code>GET  /api/agent/state</code> — poora OS + browser state<br>
+            <code>POST /api/exec</code> — <code>{"cmd":"ls /Home"}</code><br>
+            <code>GET  /api/proxy/text?url=…</code> — page ka text<br>
+            <code>GET  /api/search?q=…</code> — web search<br>
+            <div style="height:10px"></div>
+            <b>Common ops</b>
+            <table>
+              <tr><td><code>open</code></td><td>{app:"files"|"browser"|"editor"|"terminal"|"docs"…}</td></tr>
+              <tr><td><code>navigate</code></td><td>{url:"https://…"} — browser me site kholo</td></tr>
+              <tr><td><code>read</code></td><td>{mode:"text"|"elements"|"auto"} — page padho</td></tr>
+              <tr><td><code>click</code></td><td>{ref:12} ya {text:"Sign in"}</td></tr>
+              <tr><td><code>type</code></td><td>{ref:3,text:"hello",submit:true}</td></tr>
+              <tr><td><code>scroll</code></td><td>{y:800} ya {y:"bottom"}</td></tr>
+              <tr><td><code>search</code></td><td>{q:"best laptops 2026"}</td></tr>
+              <tr><td><code>notify</code></td><td>{text:"kaam ho gaya",kind:"ok"}</td></tr>
+              <tr><td><code>theme</code></td><td>{mode:"light",accent:"#35d07f"}</td></tr>
+              <tr><td><code>wallpaper</code></td><td>{css:"linear-gradient(…) or url(…)"}</td></tr>
+              <tr><td><code>window</code> ops</td><td>close / focus / minimize / maximize / move {left,top,width,height}</td></tr>
+              <tr><td><code>eval</code></td><td>{code:"document.title"} — browser page ke andar JS</td></tr>
+              <tr><td><code>tabs</code></td><td>newtab / closetab / switchtab</td></tr>
+            </table>
+            <div style="height:10px"></div>
+            <b>Tip:</b> upar input me op + args daal ke <i>Send</i> dabao — wahi rasta use hota hai jo agent use karta hai.
+          </div>`;
+        }
+      }
+
+      async function poll() {
+        try {
+          const st = await WebOS.api.get('/api/agent/state');
+          statusPill.classList.toggle('on', (st.clients || 0) > 0);
+          statusText.textContent = (st.clients || 0) + ' client' + ((st.clients || 0) === 1 ? '' : 's');
+          if (mode !== 'log') return;
+          const r = await WebOS.api.get('/api/agent/log', { since });
+          const box = body;
+          (r.log || []).forEach(e => {
+            const row = mk('div', 'ag-row');
+            row.innerHTML = `<span class="ts">${new Date(e.ts).toLocaleTimeString()}</span>
+              <span class="kind ${esc(e.kind)}">${esc(e.kind)}</span>
+              <span class="txt">${esc(e.text)}</span>`;
+            box.appendChild(row);
+          });
+          if (r.log && r.log.length) {
+            since = r.last;
+            while (box.children.length > 300) box.removeChild(box.firstChild);
+            box.scrollTop = box.scrollHeight;
+          }
+          if (!box.children.length) {
+            box.innerHTML = '<div class="empty"><span class="big">🤖</span>Abhi koi agent activity nahi.<br>Terminal me <code>curl</code> chalao ya bahar se <code>/api/agent/cmd</code> hit karo.</div>';
+          }
+        } catch (e) { /* ignore */ }
+      }
+
+      render();
+      poll();
+      timer = setInterval(poll, 1800);
+
+      return {
+        handleCommand(cmd) {
+          const op = String(cmd.op || '').toLowerCase();
+          if (op === 'agentlog' || op === 'showlog') { mode = 'log'; render(); return { ok: true }; }
+          return null;
+        },
+        destroy() { clearInterval(timer); },
+        state() { return { mode, since }; }
+      };
+    }
+  });
+})();
+
+</script>
+<script>
+/* ============ misc apps: Calculator, Settings, Docs, Monitor, Music ============ */
+(function () {
+  'use strict';
+  function mk(t, c, h) { const n = document.createElement(t); if (c) n.className = c; if (h != null) n.innerHTML = h; return n; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  /* ---------------- Calculator ---------------- */
+  WebOS.registerApp({
+    id: 'calc', name: 'Calculator', icon: '🧮', width: 320, height: 420,
+    mount(a) {
+      let expr = '';
+      const root = a.win.body;
+      const out = mk('div', 'calc-out', '0');
+      const grid = mk('div', 'calc-grid');
+      root.appendChild(out); root.appendChild(grid);
+      const keys = ['C', '(', ')', '/', '7', '8', '9', '*', '4', '5', '6', '-', '1', '2', '3', '+', '0', '.', '⌫', '='];
+      function evalExpr() {
+        try {
+          if (!/^[\d+\-*/(). %]+$/.test(expr)) throw new Error('bad');
+          const v = Function('"use strict";return (' + (expr || '0') + ')')();
+          return String(v);
+        } catch (e) { return 'error'; }
+      }
+      keys.forEach(k => {
+        const b = mk('button', '', k);
+        b.dataset.key = k;
+        b.onclick = () => {
+          if (k === 'C') expr = '';
+          else if (k === '⌫') expr = expr.slice(0, -1);
+          else if (k === '=') expr = evalExpr() === 'error' ? expr : evalExpr();
+          else expr += k;
+          out.textContent = expr || '0';
+          a.publishState({ expr, result: out.textContent });
+        };
+        grid.appendChild(b);
+      });
+      return {
+        handleCommand(cmd) {
+          const op = String(cmd.op || '').toLowerCase();
+          const args = cmd.args || {};
+          if (op === 'calc' || op === 'compute') {
+            const e = String(args.expr || args.text || '');
+            if (!e) return { ok: false, error: 'args.expr required' };
+            expr = e;
+            const v = evalExpr();
+            out.textContent = v;
+            a.publishState({ expr, result: v });
+            return { ok: v !== 'error', expr: e, result: v };
+          }
+          return null;
+        },
+        state() { return { expr, result: out.textContent }; }
+      };
+    }
+  });
+
+  /* ---------------- Settings ---------------- */
+  WebOS.registerApp({
+    id: 'settings', name: 'Settings', icon: '⚙️', width: 620, height: 560,
+    mount(a) {
+      const root = a.win.body;
+      const ACCENTS = [['#6b8cff', 'indigo'], ['#35d07f', 'green'], ['#ff8a4c', 'orange'], ['#ff5c8a', 'pink'], ['#a678ff', 'violet'], ['#39c6d6', 'cyan']];
+      const WALLS = [['aurora', null], ['deep space', 'deep space'], ['violet', 'violet'], ['sunset', 'sunset'], ['forest', 'forest'], ['paper', 'paper']];
+      root.innerHTML = `
+        <div class="section">
+          <h4>Appearance</h4>
+          <div class="rowline"><span>Themes</span>
+            <span>
+              <button class="tb-btn" data-theme="dark">Dark</button>
+              <button class="tb-btn" data-theme="light">Light</button>
+            </span>
+          </div>
+          <div class="rowline"><span>Accent</span><span class="swatches" id="accents"></span></div>
+          <div style="margin-top:10px" class="wall-grid" id="walls"></div>
+        </div>
+        <div class="section">
+          <h4>System</h4>
+          <div class="kv" id="sysinfo"></div>
+        </div>
+        <div class="section">
+          <h4>Danger zone</h4>
+          <div class="rowline"><span>Virtual filesystem reset (sab files delete)</span>
+            <button class="tb-btn" id="reset">Factory reset</button></div>
+        </div>
+        <div class="section">
+          <h4>About</h4>
+          <p style="font-size:12.5px;line-height:1.7;margin:0">
+            <b>WebOS 1.0</b> — ek browser-based operating system jo agents ke liye optimize kiya gaya hai.
+            Window manager, virtual filesystem, shell, web proxy aur agent bus sab included hain.
+            Agent <code>/api/agent/cmd</code> se isi GUI ko drive karta hai.
+          </p>
+        </div>`;
+
+      const acc = root.querySelector('#accents');
+      ACCENTS.forEach(([hex, name]) => {
+        const b = mk('div', 'sw' + (WebOS.settings.accent === hex ? ' on' : ''));
+        b.style.background = hex; b.title = name;
+        b.onclick = () => { WebOS.setAccent(hex); acc.querySelectorAll('.sw').forEach(x => x.classList.remove('on')); b.classList.add('on'); };
+        acc.appendChild(b);
+      });
+
+      const walls = root.querySelector('#walls');
+      WALLS.forEach(([name, key]) => {
+        const css = key ? WebOS.WALLS[key] : null;
+        const b = mk('div', 'wall');
+        b.style.background = css || 'radial-gradient(600px 400px at 20% 10%, #1d2b5e, transparent), linear-gradient(160deg,#0a0c12,#131726)';
+        b.title = name;
+        b.onclick = () => {
+          if (key) WebOS.setWallpaper(css);
+          else WebOS.setWallpaper(null);
+          walls.querySelectorAll('.wall').forEach(x => x.classList.remove('on'));
+          b.classList.add('on');
+        };
+        walls.appendChild(b);
+      });
+
+      root.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => WebOS.setTheme(b.dataset.theme));
+
+      fetch('/api/meta').then(r => r.json()).then(m => {
+        fetch('/api/fs/stats').then(r => r.json()).then(s => {
+          const info = root.querySelector('#sysinfo');
+          info.innerHTML = `
+            <b>version</b><span>${m.version} (${m.apps.length} apps)</span>
+            <b>kernel</b><span>node ${esc((navigator.userAgent.match(/Chrome\/[\d.]+/) || ['browser'])[0])}</span>
+            <b>client id</b><span class="mono">${esc(WebOS.clientId || '—')}</span>
+            <b>vfs files</b><span>${s.files} files · ${s.dirs} dirs · ${(s.bytes / 1024).toFixed(1)} KB</span>
+            <b>agent api</b><span class="mono">POST /api/agent/cmd · GET /api/agent/state</span>
+            <b>window size</b><span>${window.innerWidth} × ${window.innerHeight}</span>`;
+        });
+      });
+
+      root.querySelector('#reset').onclick = async () => {
+        const ok = await WebOS.confirm('Poora virtual filesystem reset karna hai? Saari files hat jayengi.');
+        if (!ok) return;
+        await fetch('/api/fs/write', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ path: '/.__reset', content: 'x' }) });
+        WebOS.notify('Filesystem reset (server restart se defaults wapas aate hain).', 'warn', 'settings');
+      };
+
+      return {
+        handleCommand(cmd) {
+          const op = String(cmd.op || '').toLowerCase();
+          if (op === 'open-settings' || op === 'restart') { location.reload(); return { ok: true }; }
+          return null;
+        },
+        state() { return { theme: WebOS.settings.theme, accent: WebOS.settings.accent }; }
+      };
+    }
+  });
+
+  /* ---------------- Docs ---------------- */
+  const DOCS = {
+    index: {
+      title: 'WebOS Manual',
+      html: `
+        <h1>◈ WebOS 1.0 — Manual</h1>
+        <p>Ye ek <b>browser-based operating system</b> hai. Sab kuch browser me chalta hai, lekin
+        backend ek chhota Node server hai jo files, shell, web proxy aur agent bus handle karta hai.</p>
+        <h2>Kya kya hai isme</h2>
+        <ul>
+          <li><b>Window manager</b> — drag, resize, minimize, maximize, multi-window, taskbar</li>
+          <li><b>Virtual filesystem</b> — /Home/Documents, Downloads, Projects… server pe JSON me persist</li>
+          <li><b>Files / Editor</b> — files banao, padho, edit karo, download karo</li>
+          <li><b>Terminal</b> — <code>ls, cd, cat, mkdir, write, open, browse, read, search, agent…</code></li>
+          <li><b>Browser</b> — real internet, server-side proxy ke through, multi-tab, elements panel</li>
+          <li><b>Agent Console</b> — live view ki agent kya kar raha hai</li>
+          <li><b>Agent API</b> — koi bhi agent (LLM, script, curl) OS ko drive kar sakta hai</li>
+        </ul>
+        <h2>Agent ke liye</h2>
+        <pre>curl -s localhost:3000/api/agent/state | jq
+
+curl -s localhost:3000/api/agent/cmd -H 'content-type: application/json' -d '{
+  "op":"navigate", "app":"browser",
+  "args": {"url":"https://news.ycombinator.com"}, "wait": true
+}'
+
+curl -s localhost:3000/api/agent/cmd -H 'content-type: application/json' -d '{
+  "op":"read", "args": {"mode":"elements"}, "wait": true
+}'</pre>
+        <p>Har command ka result turant milta hai (<code>wait:true</code>), aur OS ka poora state
+        <code>/api/agent/state</code> pe available rehta hai — windows, focused app, browser page, DOM refs, text.</p>`
+    },
+    shortcuts: {
+      title: 'Shortcuts & Tips',
+      html: `
+        <h1>Shortcuts</h1>
+        <table>
+          <tr><th>Key</th><th>Action</th></tr>
+          <tr><td><span class="kbd">Ctrl</span> + <span class="kbd">Space</span></td><td>Start menu</td></tr>
+          <tr><td><span class="kbd">Ctrl</span> + <span class="kbd">K</span></td><td>Browser address bar focus</td></tr>
+          <tr><td><span class="kbd">Ctrl</span> + <span class="kbd">T</span></td><td>New browser tab</td></tr>
+          <tr><td><span class="kbd">Ctrl</span> + <span class="kbd">W</span></td><td>Active window close</td></tr>
+          <tr><td><span class="kbd">Alt</span> + <span class="kbd">←</span></td><td>Browser back</td></tr>
+          <tr><td>double-click titlebar</td><td>Maximize / restore window</td></tr>
+        </table>
+        <h2>Terminal examples</h2>
+        <pre>ls /Home
+mkdir /Home/Projects/demo
+write /Home/Projects/demo/readme.md "hello world"
+cat /Home/Projects/demo/readme.md
+browse https://example.com
+read https://example.com
+search webos operating system
+open editor /Home/Documents/welcome.txt
+agent state
+notify "terminal se hello"</pre>`
+    }
+  };
+
+  WebOS.registerApp({
+    id: 'docs', name: 'Docs', icon: '📖', width: 700, height: 540,
+    mount(a) {
+      const page = (a.args && (a.args.page || a.args.arg)) || 'index';
+      const root = a.win.body;
+      const bar = mk('div', 'toolbar');
+      bar.innerHTML = `<button class="tb-btn" data-p="index">Manual</button><button class="tb-btn" data-p="shortcuts">Shortcuts</button>`;
+      const view = mk('div', 'doc');
+      view.style.cssText = 'flex:1;overflow:auto;padding:18px';
+      root.appendChild(bar); root.appendChild(view);
+      function show(p) {
+        const d = DOCS[p] || DOCS.index;
+        view.innerHTML = d.html;
+        a.setTitle('Docs', d.title);
+        bar.querySelectorAll('[data-p]').forEach(b => b.classList.toggle('primary', b.dataset.p === p));
+        a.publishState({ page: p, title: d.title });
+      }
+      bar.onclick = (e) => { if (e.target.dataset.p) show(e.target.dataset.p); };
+      show(page);
+      return {
+        handleCommand(cmd) {
+          const op = String(cmd.op || '').toLowerCase();
+          if (op === 'showpage' || op === 'doc') {
+            show(cmd.args && (cmd.args.page || cmd.args.arg) || 'index');
+            return { ok: true, page: cmd.args && cmd.args.page };
+          }
+          return null;
+        },
+        state() { return { page: (view.querySelector('h1') || {}).textContent }; }
+      };
+    }
+  });
+
+  /* ---------------- Monitor (task manager) ---------------- */
+  WebOS.registerApp({
+    id: 'monitor', name: 'Monitor', icon: '📊', width: 640, height: 480,
+    mount(a) {
+      const root = a.win.body;
+      const bar = mk('div', 'toolbar');
+      bar.innerHTML = `<button class="tb-btn primary" data-a="refresh">⟳ Refresh</button>
+        <span style="color:var(--muted);font-size:11.5px" id="up"></span>`;
+      const body = mk('div', 'panel-body');
+      root.appendChild(bar); root.appendChild(body);
+
+      async function refresh() {
+        const [meta, stats, agent] = await Promise.all([
+          fetch('/api/meta').then(r => r.json()),
+          fetch('/api/fs/stats').then(r => r.json()),
+          fetch('/api/agent/state').then(r => r.json())
+        ]);
+        const s = WebOS.state();
+        const mem = performance.memory ? (performance.memory.usedJSHeapSize / 1048576).toFixed(1) + ' MB' : 'n/a';
+        body.innerHTML = `
+          <div class="kv">
+            <b>WebOS</b><span>v${meta.version} · ${meta.apps.length} apps</span>
+            <b>agent clients</b><span>${agent.clients || 0} connected ${agent.connected ? '✅' : '⚠️ none'}</span>
+            <b>agent queue</b><span>${agent.queueDepth || 0} pending</span>
+            <b>files</b><span>${stats.files} files · ${stats.dirs} dirs · ${(stats.bytes / 1024).toFixed(1)} KB</span>
+            <b>JS heap</b><span>${mem}</span>
+            <b>screen</b><span>${window.innerWidth}×${window.innerHeight} @ ${window.devicePixelRatio}x</span>
+            <b>online</b><span>${navigator.onLine ? 'yes' : 'no'}</span>
+          </div>
+          <h4 style="margin:16px 0 8px;font-size:11px;letter-spacing:.12em;color:var(--muted)">OPEN WINDOWS (${s.windows.length})</h4>
+          ${s.windows.map(w => `<div class="rowline" style="border-bottom:1px solid var(--line)">
+            <span>${w.focused ? '🟢' : '⚪'} <b>${esc(w.app)}</b> — ${esc(w.title)}</span>
+            <span class="mono" style="font-size:10.5px;color:var(--muted)">${w.rect.width}×${w.rect.height} @${w.rect.left},${w.rect.top}${w.minimized ? ' · min' : ''}</span>
+          </div>`).join('') || '<div class="empty">koi window open nahi</div>'}
+          <h4 style="margin:16px 0 8px;font-size:11px;letter-spacing:.12em;color:var(--muted)">RECENT AGENT ACTIVITY</h4>
+          ${(WebOS.bridge && WebOS.bridge.history() || []).slice(-8).map(c =>
+            `<div class="rowline" style="border-bottom:1px solid var(--line)"><span class="mono" style="font-size:11px">${esc(c.op)} ${esc(JSON.stringify(c.args || {}).slice(0, 60))}</span>
+            <span class="badge" style="background:${c.ok ? 'rgba(53,208,127,.2)' : 'rgba(255,92,108,.2)'}">${c.ok ? 'ok' : 'fail'} ${c.ms || 0}ms</span></div>`).join('') || '<div style="color:var(--muted);font-size:12px">abhi koi command nahi aayi</div>'}
+        `;
+        bar.querySelector('#up').textContent = 'state age: ' + Math.round((Date.now() - (agent.ts || Date.now())) / 1000) + 's';
+      }
+      bar.onclick = (e) => { if (e.target.dataset.a === 'refresh') refresh(); };
+      refresh();
+      const t = setInterval(refresh, 3000);
+      return { destroy() { clearInterval(t); }, state() { return { view: 'monitor' }; } };
+    }
+  });
+
+  /* ---------------- Music (simple tone synth — WebAudio) ---------------- */
+  WebOS.registerApp({
+    id: 'music', name: 'Music', icon: '🎵', width: 420, height: 300,
+    mount(a) {
+      const root = a.win.body;
+      const p = mk('div', 'panel-body');
+      p.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;height:100%">
+          <div style="font-size:32px">🎵</div>
+          <div style="font-size:12.5px;color:var(--muted);text-align:center">WebAudio tone synthesizer<br>chhote melodies browser me hi bajti hain</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+            ${[['startup', 'C E G C'], ['alert', 'A C# E'], ['chime', 'G B D G'], ['ui', 'E G']].map(([n]) => `<button class="tb-btn" data-t="${n}">${n}</button>`).join('')}
+          </div>
+          <div style="font-size:11px;color:var(--muted)">Agent op: <code>{"op":"tone","args":{"name":"chime"}}</code></div>
+        </div>`;
+      root.appendChild(p);
+      const NOTES = { C: 261.63, 'C#': 277.18, D: 293.66, 'D#': 311.13, E: 329.63, F: 349.23, 'F#': 369.99, G: 392.0, 'G#': 415.3, A: 440.0, 'A#': 466.16, B: 493.88 };
+      const TUNES = { startup: ['C4', 'E4', 'G4', 'C5'], alert: ['A4', 'C#5', 'E5'], chime: ['G4', 'B4', 'D5', 'G5'], ui: ['E4', 'G4'] };
+      let ctx = null;
+      function play(name) {
+        try {
+          if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const seq = TUNES[name] || TUNES.chime;
+          seq.forEach((n, i) => {
+            const freq = NOTES[n.replace(/\d/, '')] * (n.endsWith('5') ? 2 : 1);
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'sine'; o.frequency.value = freq;
+            g.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.16);
+            g.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + i * 0.16 + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.16 + 0.42);
+            o.connect(g); g.connect(ctx.destination);
+            o.start(ctx.currentTime + i * 0.16); o.stop(ctx.currentTime + i * 0.16 + 0.45);
+          });
+          return true;
+        } catch (e) { return false; }
+      }
+      p.onclick = (e) => { if (e.target.dataset.t) play(e.target.dataset.t); };
+      return {
+        handleCommand(cmd) {
+          if (String(cmd.op).toLowerCase() === 'tone') {
+            const ok = play((cmd.args && cmd.args.name) || 'chime');
+            return { ok, played: (cmd.args && cmd.args.name) || 'chime' };
+          }
+          return null;
+        },
+        state() { return { tunes: Object.keys(TUNES) }; }
+      };
+    }
+  });
+})();
+
+</script>
+<script>
+  (function () {
+    var log = function (t) {
+      var el = document.getElementById('bootLog');
+      var d = document.createElement('div');
+      d.textContent = '▸ ' + t;
+      el.appendChild(d);
+      el.scrollTop = el.scrollHeight;
+    };
+    var steps = [
+      'loading kernel modules...',
+      'mounting virtual filesystem (/Home)...',
+      'starting window manager...',
+      'connecting agent bus...',
+      'local mode: proxy/search ke liye server chalao',
+      'ready.'
+    ];
+    var i = 0;
+    var t = setInterval(function () {
+      if (i < steps.length) { log(steps[i++]); return; }
+      clearInterval(t);
+      var boot = document.getElementById('boot');
+      boot.classList.add('boot-done');
+      document.getElementById('os').classList.remove('hidden');
+      window.WebOS.boot();
+    }, 220);
+  })();
+</script>
+</body>
+</html>

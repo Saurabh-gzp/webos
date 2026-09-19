@@ -115,7 +115,7 @@
         <span class="win-title">${esc(manifest.name)}</span>
         <div class="win-controls">
           <button class="win-min" title="Minimize">–</button>
-          <button class="win-max" title="Maximize">▢</button>
+          <button class="win-max" title="Maximize">□</button>
           <button class="win-close" title="Close">✕</button>
         </div>
       </div>
@@ -646,7 +646,11 @@
       }
     }, 260);
 
-    WebOS.notify('Agent bus ready. /api/agent/cmd se OS control karo.', 'ok', 'WebOS 1.0');
+    if (window.WEBOS_LOCAL) {
+      WebOS.notify('Local mode — sab kuch browser ke andar. Console me WebOS.handleCommand({op:"open",app:"files"}) try karo.', 'ok', 'WebOS 1.0 (single file)');
+    } else {
+      WebOS.notify('Agent bus ready. /api/agent/cmd se OS control karo.', 'ok', 'WebOS 1.0');
+    }
     emit('boot');
   }
 

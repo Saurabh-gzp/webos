@@ -45,7 +45,12 @@
   function hostOf(u) {
     try { return new URL(u).host.replace(/^www\./, ''); } catch (e) { return String(u || '').slice(0, 40); }
   }
-  function proxyUrl(u) { return '/api/proxy?url=' + encodeURIComponent(u); }
+  function localMode() { return !!window.WEBOS_LOCAL; }
+  function proxyUrl(u) {
+    // local (single-file) build: load the page straight from the internet
+    if (localMode()) return u;
+    return '/api/proxy?url=' + encodeURIComponent(u);
+  }
 
   /* ---------- mini bridge injected into our own srcdoc pages ---------- */
   function miniBridge() {
@@ -194,7 +199,7 @@ ${miniBridge()}
  function go(){ var v=document.getElementById('q').value.trim(); if(!v) return; parent.postMessage({__webos:true,type:'navigate',url:'webos://search?q='+encodeURIComponent(v)},'*'); }
  document.getElementById('go').onclick = go;
  document.getElementById('q').addEventListener('keydown', function(e){ if(e.key==='Enter') go(); });
-</script>
+<\/script>
 ${miniBridge()}
 </body></html>`;
   }
@@ -319,7 +324,9 @@ ${miniBridge()}
         toolbar.querySelector('[data-act="back"]').disabled = t.hi <= 0;
         toolbar.querySelector('[data-act="fwd"]').disabled = t.hi >= t.history.length - 1;
         stUrl.textContent = t.url;
-        stInfo.textContent = `${t.elements.length} elements • ${t.text.length} chars • ${t.loading ? 'loading' : 'ready'}`;
+        stInfo.textContent = localMode()
+          ? 'local mode • direct load • agent refs ke liye server chalao'
+          : `${t.elements.length} elements • ${t.text.length} chars • ${t.loading ? 'loading' : 'ready'}`;
       }
 
       /* ---- navigation ---- */
@@ -384,12 +391,16 @@ ${miniBridge()}
         tab.iframe.src = proxyUrl(real);
         renderTabs(); syncToolbar(); publish();
 
-        const ok = await waitForLoad(tab, opts.timeout || 20000);
+        const ok = await waitForLoad(tab, opts.timeout || (localMode() ? 8000 : 20000));
         publish();
         return ok;
       }
 
       async function doSearch(tab, query, opts = {}) {
+        if (localMode()) {
+          // no server -> no /api/search. Just hand the query to the engine itself.
+          return navigate(tab, 'https://duckduckgo.com/?q=' + encodeURIComponent(query), { skipHistory: opts.skipHistory });
+        }
         tab.loading = true; progress.classList.add('on');
         tab.url = 'webos://search?q=' + encodeURIComponent(query);
         tab.title = '🔍 ' + query;
@@ -701,6 +712,13 @@ ${miniBridge()}
           case 'reload': case 'refresh': await navigate(t, t.url, { skipHistory: true }); return { ok: true, url: t.url };
           case 'home': await navigate(t, 'webos://start'); return { ok: true, url: 'webos://start' };
           case 'read': case 'snapshot': {
+            if (localMode() && t && t.elements.length === 0) {
+              return {
+                ok: false, localMode: true, url: t.url,
+                error: 'local (single-file) build me page ke andar inject nahi ho sakta — ' +
+                       'elements/text ke liye server mode chalao: node server.js'
+              };
+            }
             const mode = args.mode || 'auto';
             let text = t ? t.text : '';
             let title = t ? t.title : '';
