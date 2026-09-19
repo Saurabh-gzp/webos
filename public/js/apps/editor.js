@@ -94,7 +94,20 @@
       async function load(p) {
         if (!p) return;
         const r = await WebOS.api.fs.read(p);
-        if (r.error) { WebOS.notify(r.error, 'err', 'editor'); return; }
+        if (r.error) {
+          // File abhi exist nahi karta -> naya file banao (path yaad rakho, Save se create ho jayega).
+          // Agent ke liye bhi yahi behaviour chahiye: open + edit + save = create.
+          if (/no such file/i.test(r.error)) {
+            path = p; area.value = ''; dirty = false;
+            pathin.value = p;
+            a.setTitle('Editor', p.split('/').pop() + ' (new)');
+            setStatus();
+            a.publishState({ path, bytes: 0, dirty: false, isNew: true });
+            return;
+          }
+          WebOS.notify(r.error, 'err', 'editor');
+          return;
+        }
         path = r.path; area.value = r.content || ''; dirty = false;
         pathin.value = path;
         a.setTitle('Editor', path.split('/').pop());
