@@ -104,6 +104,12 @@ html = html.replace("'warming web proxy...'", () => "'local mode: proxy/search k
 
 fs.writeFileSync(OUT, html);
 
+// public/ me bhi ek copy rakho, taaki deployed OS se bhi download ho sake
+// (URL: <server>/webos-standalone.html)
+const PUB_COPY = path.join(PUB, 'webos-standalone.html');
+fs.writeFileSync(PUB_COPY, html);
+
 const kb = (Buffer.byteLength(html) / 1024).toFixed(1);
 console.log('✓ built ' + path.relative(ROOT, OUT) + '  (' + kb + ' KB, self-contained)');
+console.log('✓ copied to ' + path.relative(ROOT, PUB_COPY));
 console.log('  open it directly in a browser, or preview it in the workspace.');
