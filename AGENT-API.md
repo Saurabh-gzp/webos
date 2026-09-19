@@ -108,6 +108,71 @@ Response: `{"ok":true,"handledBy":"browser","windowId":"w1", ...op-specific fiel
 | `tabs` / `newtab` / `closetab` / `switchtab` | `{id}` / `{index}` | tab management |
 | `panel` | `{mode:"elements\|text\|tools\|off"}` | side panel |
 
+### Real Chromium (headless Chromium session — Manus-jaisa)
+
+Iframe wala browser proxy pe chalta hai (kuch sites rok deti hain). Iske saath **asli Chromium**
+bhi chalta hai — server pe headless Chromium, jisme agent ko real mouse/keyboard/vision milta hai.
+Sab kuch HTTP se, isliye koi external agent (Manus AI style) ise easily drive kar sakta hai.
+
+| endpoint | kya karta hai |
+|---|---|
+| `POST /api/browser` | nayi session: `{url?, width?, height?}` → `{sessionId}` (pehli baar Chromium launch hota hai ~1s) |
+| `GET  /api/browser/status` | engine running?, version, saari sessions |
+| `GET  /api/browser/sessions` | session list · `DELETE` → sab band |
+| `POST /api/browser/task` | **ek hi call me poora task**: `{actions:[{action,…}], sessionId?, stopOnError?, finalState?}` |
+| `POST /api/browser/<id>/navigate` | `{url, waitUntil?, settle?}` → title, url, elements[], text |
+| `POST /api/browser/<id>/act` | `{action:"click\|type\|press\|scroll\|eval\|extract\|screenshot\|back\|forward\|reload\|state", …}` |
+| `POST /api/browser/<id>/click` | `{ref}` ya `{text:"Sign in"}` ya `{selector}` ya `{x,y}` — asli mouse click |
+| `POST /api/browser/<id>/type` | `{ref\|selector\|text_selector\|x,y, text, submit?:true, clear?}` — asli keyboard |
+| `POST /api/browser/<id>/press` | `{key:"Enter\|Tab\|PageDown…"}` |
+| `POST /api/browser/<id>/scroll` | `{y:800}` ya `{to:"bottom"}` ya `{ref}` (element tak) |
+| `POST /api/browser/<id>/eval` | `{code:"document.title"}` |
+| `GET  /api/browser/<id>/state` | url, title, scroll, elements[] (stable refs), text |
+| `GET  /api/browser/<id>/extract` | reader-jaisa output: text + headings + links + images |
+| `GET  /api/browser/<id>/screenshot?full=1&type=png` | **asli screenshot** (JPEG/PNG binary — vision models ke liye) |
+| `GET  /api/browser/<id>/frame` | last screencast frame (base64 JPEG, halka) |
+| `GET  /api/browser/<id>/stream` | **SSE live view**: screencast frames + nav events (UI isi se live dikhata hai) |
+| `POST /api/browser/<id>/close` | session band (Chromium idle hone par khud bhi band ho jata hai) |
+
+Agent bus se bhi wahi kaam (GUI window khuli ho ya na ho):
+
+```
+POST /api/agent/cmd {"op":"chromium.open",  "args":{"url":"https://news.ycombinator.com"}}
+POST /api/agent/cmd {"op":"chromium.goto",  "args":{"url":"https://example.com"}}
+POST /api/agent/cmd {"op":"chromium.act",   "args":{"action":"click","text":"Sign in"}}
+POST /api/agent/cmd {"op":"chromium.act",   "args":{"action":"type","text":"hello","submit":true}}
+POST /api/agent/cmd {"op":"chromium.act",   "args":{"action":"extract"}}
+POST /api/agent/cmd {"op":"chromium.screenshot"}          → VFS me save: {path:"/Home/Screenshots/shot-….jpg"}
+POST /api/agent/cmd {"op":"chromium.task",  "args":{"actions":[…]}}
+POST /api/agent/cmd {"op":"chromium.status"}
+```
+
+**Manus-style ek-call task** (research → click → padho → screenshot):
+
+```bash
+curl -X POST https://webos-inte.onrender.com/api/browser/task -H 'content-type: application/json' -d '{
+  "actions": [
+    {"action": "navigate", "url": "https://news.ycombinator.com"},
+    {"action": "click",    "text": "new"},
+    {"action": "extract",  "keep": true},
+    {"action": "screenshot"}
+  ]
+}'
+```
+
+Task actions: `navigate · click · type · press · scroll · wait {ms} · eval · extract/read · screenshot ·
+back · forward · reload · state`. Har step ka result milta hai (`ok`, `ms`, `url`, `title`, error) aur
+`sessionId` lauta kar aap wahi session aage drive kar sakte ho (cookies/login bane rehte hain).
+
+**Element refs:** `state`/`navigate` ke response me har link/button/input ka `ref` aata hai
+(`{ref, kind, tag, text, rect, inView}`). `click {ref}` / `type {ref, text}` refs ko use karo —
+refs page ke saath stable rehte hain. Ref ke bina `{"text":"Sign in"}` bhi chalta hai (placeholder /
+aria-label / name match hota hai, isliye "Search" jaise input bina selector jaane mil jaate hain).
+
+**Live view:** `GET /api/browser/<id>/stream` (SSE) se frames stream hote hain — OS ke Chromium app
+window ka left side wahi hai, aur human wahan click/scroll/keyboard bhi kar sakta hai (same session,
+same cookies). UI: desktop icon **🌐 Chromium**.
+
 ### Filesystem / shell / editor
 
 | op | endpoint | args |
@@ -130,6 +195,10 @@ GET  /api/fs/list?path=/Home    → entries
 GET  /api/fs/read?path=…        → content
 POST /api/fs/write              → {path, content}
 GET  /api/agent/log             → agent activity log
+POST /api/browser               → nayi REAL Chromium session (headless Chrome)
+POST /api/browser/task          → {actions:[…]} Manus-style multi-step task
+GET  /api/browser/<id>/screenshot → image/jpeg | image/png (vision ke liye)
+GET  /api/browser/<id>/stream   → SSE live screencast (text/event-stream)
 GET  /api/meta                  → version, apps, endpoints
 GET  /api/ping                  → health
 ```

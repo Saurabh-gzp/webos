@@ -103,6 +103,37 @@ node tools/agent-cli.js type 0 "hello webos" --submit
 node tools/agent-cli.js shell "ls /Home/Documents"
 ```
 
+### Asli Chromium (Manus-jaisa browser agent)
+
+Iframe-proxy browser ke saath ab **real headless Chromium** bhi hai — agent ko asli mouse, keyboard,
+screenshot (vision) aur element refs milte hain, aur human wahi session live dekh sakta hai.
+
+```bash
+BASE=https://webos-inte.onrender.com
+
+# 1. nayi Chromium session
+SID=$(curl -s -X POST $BASE/api/browser -H 'content-type: application/json' \
+      -d '{"url":"https://news.ycombinator.com"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["sessionId"])')
+
+# 2. ek call me poora task (navigate → click → read → screenshot)
+curl -s -X POST $BASE/api/browser/task -H 'content-type: application/json' -d '{
+  "actions":[
+    {"action":"navigate","url":"https://example.com"},
+    {"action":"extract","keep":true},
+    {"action":"screenshot"}
+  ]}'
+
+# 3. live view (SSE screencast) — browser me kholo
+open "$BASE/api/browser/$SID/stream"
+
+# 4. asli screenshot (vision models ke liye)
+curl -s "$BASE/api/browser/$SID/screenshot" -o shot.jpg
+```
+
+Agent bus se: `chromium.open · chromium.goto · chromium.act · chromium.task · chromium.screenshot ·
+chromium.frame · chromium.status · chromium.close` (GUI window khuli ho ya na ho — server pe hi chalta hai).
+OS ke andar **🌐 Chromium** app me live screen + agent panel + Ref-click + Manus-style task runner hai.
+
 Poora reference: **[AGENT-API.md](AGENT-API.md)** (`/Home/Documents/agent-quickstart.md` bhi OS ke andar hai).
 
 ---
@@ -116,6 +147,7 @@ webos/
 │   ├── vfs.js             virtual filesystem (data/fs.json me persist)
 │   ├── shell.js           shell commands (ls/cd/cat/write/open/browse/read/search/agent…)
 │   ├── proxy.js           web proxy: fetch → rewrite (base, resources, frame-busting) → bridge inject
+│   ├── chromium.js        REAL Chromium sessions (puppeteer/CDP): screencast, refs, clicks, task runner
 │   └── agent.js           agent bus: SSE down, REST up, queue, long-poll, inbox fallback
 ├── public/
 │   ├── index.html         boot screen + desktop
@@ -123,7 +155,8 @@ webos/
 │   └── js/
 │       ├── kernel.js      window manager, apps registry, toasts, prompts, state
 │       ├── bridge.js      SSE client + result/state reporting + inbox fallback
-│       └── apps/          browser.js · files.js · editor.js · terminal.js · agentapp.js · misc.js
+│       └── apps/          chromium.js (asli Chromium live view + agent panel) · browser.js · files.js
+│                          editor.js · terminal.js · agentapp.js · misc.js
 ├── tools/agent-cli.js     agent ke liye ready-made CLI
 └── data/fs.json           persisted virtual filesystem
 ```
@@ -169,3 +202,6 @@ webos/
   result reject ho kar next engine try hota hai. Instance cooldown + 3-min result cache bhi hai.
 * Login/cookie wali sessions kaam karti hain (form POST proxy se jaate hain) lekin kuch sites
   JS-based auth (captcha) maangti hain — wo robot ke liye ruk jayegi.
+* **Real Chromium** ko memory chahiye: Render free (512 MB) pe 1-2 session comfortable hai; idle hone par
+  Chromium khud band ho jaata hai. Bade kaam ke liye `WEBOS_CHROMIUM_SESSIONS` badhao + plan upgrade karo.
+  Single-file build (file://) me Chromium nahi hota — wahan app remote server URL maang leta hai.

@@ -35,7 +35,7 @@ const escapeForInline = (js) => js
 const css = read(path.join(PUB, 'css', 'os.css'));
 const kernel = read(path.join(PUB, 'js', 'kernel.js'));
 const local = read(path.join(PUB, 'js', 'local.js'));
-const APP_FILES = ['browser', 'files', 'editor', 'terminal', 'agentapp', 'misc'];
+const APP_FILES = ['chromium', 'browser', 'files', 'editor', 'terminal', 'agentapp', 'misc'];
 const apps = APP_FILES
   .map(f => '<script>\n' + escapeForInline(read(path.join(PUB, 'js', 'apps', f + '.js'))) + '\n</script>')
   .join('\n');

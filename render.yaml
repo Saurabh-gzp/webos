@@ -1,27 +1,33 @@
-# Render blueprint for WebOS
+# Render blueprint for WebOS (Docker image: Node 20 + asli Chromium)
 # Dashboard -> New -> Blueprint -> repo select karo, ye file auto-detect ho jayegi.
 #
 # FREE plan notes:
 #   * 15 min inactivity ke baad service sleep hoti hai (~1 min cold start)
 #   * local filesystem ephemeral hai -> virtual FS redeploy/restart pe reset ho jaata hai
 #     (persist karna hai to paid instance + disk: neeche commented block dekho)
+#   * 512 MB RAM: ek saath 1-2 Chromium sessions comfortable hain. Zyada chahiye to
+#     WEBOS_CHROMIUM_SESSIONS badhao aur plan upgrade karo.
 
 services:
   - type: web
     name: webos
-    runtime: node
+    runtime: docker
+    dockerfilePath: ./Dockerfile
     plan: free
     region: singapore          # India ke liye sabse kam latency
-    buildCommand: npm install  # koi dependency nahi, turant nikal jaata hai
-    startCommand: node server.js
     healthCheckPath: /api/ping
     autoDeploy: true
     envVars:
-      - key: NODE_VERSION
-        value: "20"
       - key: WEBOS_DATA_DIR
-        value: /opt/render/project/src/data
-      # - key: PORT          # Render khud inject karta hai, isliye zaroorat nahi
+        value: /data
+      # Chromium: 'auto' = pehli session maangne par launch, 'off' = band, 'force' = boot pe hi
+      - key: WEBOS_CHROMIUM
+        value: auto
+      - key: WEBOS_CHROMIUM_SESSIONS
+        value: "2"
+      # headless = chrome-headless-shell (halka); 1 = naya full headless mode (zyada RAM)
+      - key: WEBOS_CHROMIUM_FULL
+        value: "0"
 
     # ---------------------------------------------------------------
     # Persistent disk (sirf PAID instance types pe kaam karta hai).

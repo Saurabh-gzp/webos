@@ -18,6 +18,18 @@
  *   node tools/agent-cli.js write /Home/a.txt "hello"
  *   node tools/agent-cli.js do '{"op":"navigate","args":{"url":"https://example.com"}}'
  *
+ * Real Chromium (iframe-proxy ke bajaye asli browser):
+ *   node tools/agent-cli.js chrome status
+ *   node tools/agent-cli.js chrome open https://news.ycombinator.com
+ *   node tools/agent-cli.js chrome goto https://example.com
+ *   node tools/agent-cli.js chrome click "Sign in"      # text / ref / selector
+ *   node tools/agent-cli.js chrome type "hello" --submit
+ *   node tools/agent-cli.js chrome read                 # text + links
+ *   node tools/agent-cli.js chrome els                  # element refs
+ *   node tools/agent-cli.js chrome shot                 # screenshot -> VFS
+ *   node tools/agent-cli.js chrome task '[{"action":"navigate","url":"https://example.com"},{"action":"extract","keep":true}]'
+
+ *
  * ENV: WEBOS_URL (default http://localhost:3000)
  */
 
@@ -73,6 +85,40 @@ const show = (o) => console.log(typeof o === 'string' ? o : JSON.stringify(o, nu
     case 'grep': return show(await get('/api/fs/search?q=' + encodeURIComponent(positional[0]) + '&path=' + encodeURIComponent(positional[1] || '/')));
     case 'extract': return show(await get('/api/proxy/text?url=' + encodeURIComponent(positional[0])));
     case 'websearch': return show(await get('/api/search?q=' + encodeURIComponent(positional.join(' '))));
+    case 'chrome': case 'chromium': {
+      const sub = (positional[0] || 'status').toLowerCase();
+      const arg = positional.slice(1).join(' ');
+      if (sub === 'status' || sub === 'sessions') return show(await get('/api/browser/status'));
+      if (sub === 'open') return show(await post('/api/browser', { url: arg || 'about:blank' }));
+      if (sub === 'goto' || sub === 'nav' || sub === 'navigate') return show(await cmdCall('chromium.goto', { url: arg }));
+      if (sub === 'read' || sub === 'extract') {
+        const r = await cmdCall('chromium.act', { action: 'extract' });
+        if (flags.has('--text')) return show((r.text || '').slice(0, Number(positional[2]) || 20000));
+        return show({ ok: r.ok, url: r.url, title: r.title, chars: (r.text || '').length, headings: (r.headings || []).length, links: (r.links || []).slice(0, 25) });
+      }
+      if (sub === 'els' || sub === 'elements' || sub === 'state') return show(await cmdCall('chromium.act', { action: 'state', limit: Number(positional[1]) || 60 }));
+      if (sub === 'click') {
+        const args = /^\d+$/.test(arg) ? { action: 'click', ref: Number(arg) } : { action: 'click', text: arg };
+        return show(await cmdCall('chromium.act', args));
+      }
+      if (sub === 'type' || sub === 'fill') {
+        return show(await cmdCall('chromium.act', { action: 'type', text: arg, submit: flags.has('--submit'), focus: flags.has('--focus') }));
+      }
+      if (sub === 'key' || sub === 'press') return show(await cmdCall('chromium.act', { action: 'press', key: arg || 'Enter' }));
+      if (sub === 'scroll') return show(await cmdCall('chromium.act', { action: 'scroll', y: Number(arg) || 800 }));
+      if (sub === 'eval') return show(await cmdCall('chromium.act', { action: 'eval', code: arg }));
+      if (sub === 'shot' || sub === 'screenshot') return show(await cmdCall('chromium.screenshot', { full: flags.has('--full') }));
+      if (sub === 'frame') return show(await cmdCall('chromium.frame', {}));
+      if (sub === 'close') return show(await cmdCall('chromium.close', { all: flags.has('--all') }));
+      if (sub === 'task') {
+        const actions = JSON.parse(arg || '[]');
+        return show(await cmdCall('chromium.task', { actions, include: 'text' }));
+      }
+      return show({
+        ok: false, error: 'unknown chrome subcommand: ' + sub,
+        try: ['status', 'open <url>', 'goto <url>', 'click <ref|text>', 'type <text> [--submit]', 'key <Enter>', 'scroll <y>', 'eval <js>', 'read [--text]', 'els', 'shot', 'frame', 'task [...actions]', 'close [--all]']
+      });
+    }
     case 'do': {
       const spec = JSON.parse(positional.join(' ') || '{}');
       return show(await cmdCall(spec.op, spec.args || {}, spec.app));
@@ -86,6 +132,9 @@ const show = (o) => console.log(typeof o === 'string' ? o : JSON.stringify(o, nu
   open <app> [url|path] | nav <url> | read [text|elements|auto] | links | inputs
   click <ref> | click "<visible text>" | type <ref> "<text>" [--submit]
   search "<query>" | extract <url> | websearch "<query>"
+  chrome status | chrome open <url> | chrome goto <url> | chrome read [--text] | chrome els
+  chrome click <ref|"text"> | chrome type "<text>" [--submit] | chrome key <Enter> | chrome scroll <y>
+  chrome eval "<js>" | chrome shot | chrome frame | chrome task '[{"action":"navigate","url":...}]' | chrome close [--all]
   notify "<text>" | theme [dark|light] [accent] | wallpaper "<css gradient>"
   do '{"op":"...","args":{...}}'`);
   }
