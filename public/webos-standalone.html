@@ -844,17 +844,20 @@ Server mode (node server.js) me extra: read <url>, search <query>, agent <op>`;
   const origFetch = window.fetch ? window.fetch.bind(window) : null;
   window.fetch = function (input, init) {
     const url = typeof input === 'string' ? input : (input && input.url) || '';
+    // Sandboxed iframes (preview/embed) me document ka origin opaque hota hai —
+    // tab relative URL parse hi nahi hota, isliye string ko bhi check karte hain.
     let u = null;
-    try { u = new URL(url, location.href); } catch (e) {}
-    if (u && u.pathname.indexOf('/api/') === 0) {
-      const q = u.searchParams;
-      responseDelay(() => {});
-      return route(u.pathname, q, init || {});
+    try { u = new URL(url, location.href); } catch (e) { u = null; }
+    const raw = String(url);
+    const isApi = (u && u.pathname.indexOf('/api/') === 0) || /^\/api\//.test(raw) || /(^|\/)api\/[a-z]+\//i.test(raw);
+    if (isApi) {
+      const path = u ? u.pathname : (raw.split('?')[0] || '');
+      const params = u ? u.searchParams : new URLSearchParams(raw.split('?')[1] || '');
+      return route(path, params, init || {});
     }
     if (origFetch) return origFetch(input, init);
     return Promise.reject(new Error('offline (local mode)'));
   };
-  function responseDelay() { /* keeps signatures tidy */ }
 
   /* expose for the console + tests */
   window.WebOSLocal = {
