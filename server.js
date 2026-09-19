@@ -63,6 +63,13 @@ function json(res, code, obj) {
   res.end(body);
 }
 
+/** Public origin of this request — Render/Vercel ke proxy headers bhi handle karta hai. */
+function originOf(req) {
+  const proto = (req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim();
+  const host = (req.headers['x-forwarded-host'] || req.headers.host || 'localhost').split(',')[0].trim();
+  return proto + '://' + host;
+}
+
 function readBody(req, limit = 12 * 1024 * 1024) {
   return new Promise((resolve, reject) => {
     let data = '';
@@ -251,11 +258,13 @@ const server = http.createServer(async (req, res) => {
       }
       if (!target) return json(res, 400, { error: 'missing url' });
       try {
-        const r = await proxy.fetchHTML(target, postOpts);
+        const r = await proxy.fetchHTML(target, { ...postOpts, proxyBase: originOf(req) });
         if (r.kind === 'binary') {
           res.writeHead(302, { location: '/api/proxy/raw?url=' + proxy.encode(r.finalUrl) });
           return res.end();
         }
+        // (relative redirects are fine: the browser resolves them against OUR host,
+        // because this response is the top-level document, not an injected base)
         res.writeHead(200, {
           'content-type': 'text/html; charset=utf-8',
           'cache-control': 'no-store'
@@ -270,7 +279,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/proxy/raw') {
       if (!q.url) return json(res, 400, { error: 'missing url' });
       try {
-        const r = await proxy.fetchRaw(q.url, q.ref);
+        const r = await proxy.fetchRaw(q.url, q.ref, originOf(req));
         res.writeHead(r.status && r.status >= 400 ? r.status : 200, {
           'content-type': r.contentType,
           'cache-control': 'public, max-age=300',
