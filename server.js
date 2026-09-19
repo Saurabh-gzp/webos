@@ -506,11 +506,13 @@ const server = http.createServer(async (req, res) => {
         send({ type: 'hello', sessionId: id, viewport: session.viewport });
         if (session.lastFrame) send({ type: 'frame', jpeg: session.lastFrame, meta: session.frameMeta, ts: session.lastFrameAt });
         let last = 0;
+        let lastSentAt = Date.now();             // keepFresh ke liye (neeche)
         const onFrame = (s) => {
           if (s.id !== id) return;
           const now = Date.now();
           if (now - last < 80) return;           // ~12fps se zyada nahi
           last = now;
+          lastSentAt = now;
           send({ type: 'frame', jpeg: s.lastFrame, meta: s.frameMeta, ts: s.lastFrameAt });
         };
         const onNav = () => send({ type: 'nav', url: session.url, title: session.title });
@@ -527,8 +529,22 @@ const server = http.createServer(async (req, res) => {
         session.on('nav', onNav);
         session.on('closed', onClose);
         chromium.on('browser-disconnected', onDisconnect);
+
+        // screencast sirf page change par frames bhejta hai — idle page pe view fresh rakhne
+        // ke liye har ~3s me last frame dobara (aur stale screencast ko restart) bhejo
+        const keepFresh = setInterval(() => {
+          const now = Date.now();
+          if (now - session.lastFrameAt > 6000) chromium.refreshFrame(session).catch(() => {});
+          if (now - lastSentAt < 3000) return;
+          if (session.lastFrame) {
+            lastSentAt = now;
+            send({ type: 'frame', jpeg: session.lastFrame, meta: session.frameMeta, ts: session.lastFrameAt, idle: true });
+          }
+        }, 1000);
+        keepFresh.unref && keepFresh.unref();
+
         const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch (e) {} }, 20000);
-        req.on('close', () => { clearInterval(ping); cleanup(); });
+        req.on('close', () => { clearInterval(ping); clearInterval(keepFresh); cleanup(); });
         return;
       }
 
